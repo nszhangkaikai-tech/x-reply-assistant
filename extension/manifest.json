@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "X Reply Assistant",
+  "version": "0.1.71",
+  "description": "Draft replies, original posts, and quote posts for X. It never publishes for you.",
+  "permissions": ["storage", "clipboardWrite", "identity", "scripting"],
+  "host_permissions": ["https://x.com/*", "https://twitter.com/*", "https://api.x.com/*", "https://api.twitter.com/*"],
+  "optional_host_permissions": ["https://*/*"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "X Reply Assistant",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://x.com/*", "https://twitter.com/*"],
+      "js": ["content.js", "follow-badge.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "options_page": "options.html"
+}

@@ -1,0 +1,9 @@
+.DS_Store
+.env
+.env.*
+*.key
+*.pem
+*.zip
+*.crx
+extension/backups/
+extension/TODO.md

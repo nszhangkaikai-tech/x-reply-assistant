@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="X Reply Assistant：承接对话上下文、管理待回复评论，并在发帖优化时参考当前为你推荐。支持自定义表达、互动复盘与手动确认发布。GitHub 内测版开放下载。">
+  <meta name="theme-color" content="#f7f9fc">
+  <title>X Reply Assistant · 让每一次回复，都接得上</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%232660ed'/%3E%3Cpath d='M11 12h18v13H18l-7 6z' fill='none' stroke='white' stroke-width='2.5'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header">
+    <a class="brand" href="#" aria-label="X Reply 首页"><span class="brand-icon" aria-hidden="true">↳</span><span>X Reply<span class="brand-dot">.</span></span></a>
+    <div class="header-links">
+      <div class="contact-links">
+        <a class="author-link" href="https://x.com/kaye77880" target="_blank" rel="noopener noreferrer"><span>作者 X：</span><strong>@kaye77880</strong></a>
+        <a class="author-link telegram-link" href="https://t.me/+VcnKeuCNrmNiMDY1" target="_blank" rel="noopener noreferrer"><span>电报交流群：</span><strong>X Reply交流群</strong></a>
+      </div>
+      <a class="header-cta" href="#download">下载 <span aria-hidden="true">↓</span></a>
+    </div>
+  </header>
+  <nav class="anchor-nav" aria-label="页面导航">
+    <div class="anchor-nav-inner">
+      <a href="#story"><span>功能介绍</span><small>开发动机与九项能力</small></a>
+      <a href="#demo"><span>演示</span><small>上下文回复体验</small></a>
+      <a href="#start"><span>安装</span><small>安装指引与常见问题</small></a>
+      <a href="#download"><span>下载</span><small>GitHub Release</small></a>
+    </div>
+  </nav>
+  <main id="main">
+    <section class="hero wrap">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="status-dot"></span> X REPLY ASSISTANT <span class="pill">GitHub 内测版</span></p>
+        <h1>评论再多，<br>也能<span class="blue">接得上话。</span></h1>
+        <p class="hero-intro">从“他刚才说了什么”，到“还有谁没回复”。<br>结合对话上下文起草回复，整理每日互动，<br class="desktop-break">也让每次发帖优化更贴近当前信息流。</p>
+        <div class="actions"><a class="button primary" href="#demo">体验回复演示 <span aria-hidden="true">↗</span></a><a class="button secondary" href="#features">看看有哪些功能 <span aria-hidden="true">↓</span></a></div>
+        <p class="hero-note"><span>◎ Chrome 桌面扩展</span><span>✧ 页面读取优先</span><span>↳ 手动确认发布</span></p>
+      </div>
+      <div class="hero-demo" id="demo">
+        <div class="demo-top"><span><span class="tiny-logo">↳</span> 一段对话，接着聊</span><span class="demo-label">功能示意 · 非实时数据</span></div>
+        <div class="thread">
+          <div class="message"><span class="avatar mint">林</span><div><div class="message-meta"><b>小林</b><span>原帖</span></div><p>评论一多，大家前面聊了什么就容易记混。你们怎么处理？</p></div></div>
+          <div class="message"><span class="avatar lavender">我</span><div><div class="message-meta"><b>我</b><span>上一轮回复</span></div><p>我会先回头看一下前面的对话，再决定怎么接。</p></div></div>
+          <div class="message"><span class="avatar mint">林</span><div><div class="message-meta"><b>小林</b><span>最新回应</span></div><p>对，就是每次往回翻太费时间了。</p></div></div>
+        </div>
+        <div class="reply-box"><div class="reply-heading"><b><span class="spark">✧</span> AI 回复建议</b><span class="context-label">已提供上文 · 演示</span></div><div class="demo-tabs" role="group" aria-label="切换示例回复"><button type="button" data-reply="0" aria-pressed="true">自然接话</button><button type="button" data-reply="1" aria-pressed="false">补充观点</button></div><p id="reply-text" aria-live="polite">是啊，最费时间的就是找回前面聊到哪了。要是回复时能把上文一起带出来，会省事不少。</p><div class="reply-bottom"><span>每个方向提供三条候选</span><button class="fill-button" id="fill-reply" type="button">填入演示框 <span aria-hidden="true">↗</span></button></div><label class="sr-only" for="draft">演示回复草稿</label><textarea id="draft" rows="3" placeholder="点击“填入演示框”，试试编辑草稿。这里不会发送任何内容。"></textarea></div>
+      </div>
+    </section>
+    <div class="trust-strip wrap"><span>为认真交流的人，少做一点重复操作。</span><div><span>上下文辅助</span><span>互动不漏回</span><span>发布由你决定</span></div></div>
+
+    <section class="story section wrap" id="story"><div><p class="eyebrow">WHY X REPLY</p><h2>不是没话说，<br>是评论太多会乱。</h2></div><div class="story-body"><p>做这个插件，起点很简单：<strong>评论一多，就容易记混，也容易漏回。</strong>谁在回应哪件事、自己之前说过什么、哪些人已经互动、哪些人还没处理，来回切换几次就失去线索。</p><p>所以它先把页面上已有的对话背景带进来，再帮你起草；同时把当天读到的评论整理成待办。发帖时，也只在你点击优化的那一刻读取当前“为你推荐”，让优化参考来自此刻的信息流。</p><blockquote>少一点记混、漏回和盲目优化，多一点真正接得上的交流。</blockquote></div></section>
+
+    <section class="features section" id="features"><div class="wrap"><div class="section-heading"><div><p class="eyebrow">MADE FOR YOUR DAILY FLOW</p><h2>从接话，到互动复盘。<br>常用的能力，都在手边。</h2></div><p>嵌入日常浏览流程，<br>页面读取优先，需要时再配置 API。</p></div><div class="feature-grid">
+      <article class="feature-card featured"><span class="feature-index">01 / CONTEXT</span><div class="context-flow"><span>原帖</span><i>→</i><span>我的回复</span><i>→</i><span>对方回应</span></div><h3>回复，先理解上下文</h3><p>页面模式直接使用当前帖子及已加载上文；需要补充父帖时，可手动开启 API 增强模式。界面显示上下文来源，没读到的信息不会冒充已知。</p><span class="card-note">基础回复无需配置 X API</span></article>
+      <article class="feature-card"><span class="feature-index">02 / YOUR VOICE</span><div class="style-tags"><span>自然接话</span><span>补充观点</span><span>自定义人设</span></div><h3>让表达，更像你自己</h3><p>自定义身份、观点、语气与表达禁区。“自然接话 / 补充观点”各给出三条不同候选，复制后仍可继续编辑。</p></article>
+      <article class="feature-card"><span class="feature-index">03 / CONNECTIONS</span><div class="account-sample"><span class="avatar lavender">创</span><b>一位创作者 <span class="verified" aria-label="认证示意">✓</span></b><span class="unfollowed">未关注</span></div><h3>谁还没关注，一眼看清</h3><p>对已确认尚未关注的账号显示标签，方便识别未关注的蓝 V 等账号。关系无法确认时不显示，也可随时关闭。</p></article>
+      <article class="feature-card"><span class="feature-index">04 / CREATION</span><div class="mini-symbol" aria-hidden="true">▤ <span>↗</span></div><h3>列表内容，变成创作起点</h3><p>查看自有 Lists 成员的近期帖子，生成二创或引用转发草稿。保留你的观点，编辑后再带入 X 发布框。</p></article>
+      <article class="feature-card"><span class="feature-index">05 / DISCOVERY</span><div class="mini-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><span>发现 · 复盘</span></div><h3>看热点，也看自己的变化</h3><p>从全球趋势榜筛选中文话题，寻找选题参考；查看发帖、回复、曝光和粉丝净变化，辅助日常复盘。</p></article>
+      <article class="feature-card"><span class="feature-index">06 / YOUR CHOICE</span><div class="provider-tags"><span>DeepSeek</span><span>OpenAI</span><span>自定义</span></div><h3>模型自由选，节奏自己定</h3><p>支持多家模型服务与兼容接口，按需选择生成档位。使用自己的服务配置，模型和 X API 费用以相应服务商为准。</p></article>
+      <article class="feature-card interaction-feature"><span class="feature-index">07 / INTERACTIONS</span><div class="status-flow"><span>评论未回复</span><i>→</i><span>尚未回访</span><i>→</i><span>已完成</span></div><h3>当天互动，处理到哪一眼看清</h3><p>手动读取“通知 → 提及”和本人帖子评论页，本地整理未回复评论与尚未回访的人。发布回复后自动更新状态，无法匹配时也能手动标记。</p><span class="card-note">页面读取 · 不调用 X API</span></article>
+      <article class="feature-card optimize-feature"><span class="feature-index">08 / POST OPTIMIZER</span><div class="recommendation-sample"><span>为你推荐</span><b>12</b><small>条即时参考</small></div><h3>优化时，再读取此刻的推荐</h3><p>仅在点击“发帖优化”时，按页面顺序读取最多 12 条已加载推荐，参考主题信号、开头密度与表达方式，不长期保存，也不复制原文。</p></article>
+      <article class="feature-card"><span class="feature-index">09 / FLOATING ENTRY</span><div class="floating-sample"><span>AI 回复</span><i>拖到顺手的位置</i></div><h3>入口可移动，不挡住浏览</h3><p>“AI 回复”改为可拖动的页面浮动按钮，位置保存在当前浏览器。需要时拉到手边，不用时也不会挤占编辑区。</p></article>
+    </div></div></section>
+
+    <section class="workflow section wrap" id="workflow">
+      <div class="section-heading"><div><p class="eyebrow">NEW DAILY WORKFLOW</p><h2>新评论有去处，<br>处理结果会流转。</h2></div><p>两套页面读取逻辑，<br>分别服务互动管理与发帖优化。</p></div>
+      <div class="workflow-grid">
+        <article class="workflow-card interaction-board">
+          <div class="workflow-card-head"><div><span class="feature-index">INTERACTION DESK</span><h3>今日互动</h3></div><button type="button" disabled>从 X 页面更新</button></div>
+          <div class="mini-stats"><span><small>互动用户</small><b>12</b></span><span><small>评论未回复</small><b>3</b></span><span><small>尚未回访</small><b>2</b></span></div>
+          <div class="interaction-row"><span class="avatar mint">林</span><div><b>@linyu_ai</b><p>这个功能能把真正需要回答的问题排在前面吗？</p></div><em class="state waiting">评论未回复</em></div>
+          <div class="interaction-row"><span class="avatar lavender">周</span><div><b>@weekendmaker</b><p>评论已经回复，今天还没有回访对方。</p></div><em class="state visiting">尚未回访</em></div>
+          <p class="workflow-note">读取页面已加载内容 · 状态保存在当前浏览器</p>
+        </article>
+        <article class="workflow-card optimizer-board">
+          <div class="workflow-card-head"><div><span class="feature-index">LIVE FOR YOU SNAPSHOT</span><h3>发帖优化</h3></div><span class="live-badge"><i></i> 点击时读取</span></div>
+          <div class="snapshot"><span><b>01</b> 具体主题与清晰开头</span><span><b>02</b> 信息密度与自然表达</span><span><b>03</b> 留出真实交流空间</span></div>
+          <div class="score-line"><span>原稿潜力</span><i><b style="width:62%"></b></i><strong>62</strong></div>
+          <div class="score-line improved"><span>优化后</span><i><b style="width:78%"></b></i><strong>78</strong></div>
+          <p class="workflow-note">最多读取当前已加载 12 条 · 不代表 X 官方推荐概率</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="start section wrap" id="start"><div class="start-intro"><p class="eyebrow">GET STARTED</p><h2>准备好，<br>再开始第一句。</h2><p>面向桌面 Chrome 的手动安装方式。<br>暂不上架 Chrome 商店，安装包通过 GitHub Release 提供。</p><div class="availability"><span class="status-dot"></span><b>GitHub 内测已开放</b><p>从 GitHub Release 下载最新版安装包。<br>更新前可先在维护页导出安全配置备份。</p><a href="https://github.com/nszhangkaikai-tech/x-reply-assistant/releases/latest" target="_blank" rel="noopener noreferrer">前往 GitHub 下载 →</a></div></div><ol class="steps"><li><span class="step-number">01</span><div><h3>从 GitHub 获取并解压</h3><p>从 GitHub Release 获取安装包，解压到固定文件夹。加载后请保留该文件夹。</p></div></li><li><span class="step-number">02</span><div><h3>在 Chrome 加载扩展</h3><p>打开扩展管理页，启用开发者模式，选择“加载已解压的扩展程序”，定位到包含 manifest.json 的目录。</p><div class="copy-row"><code>chrome://extensions</code><button id="copy-address" type="button">复制地址</button></div><span class="copy-status" id="copy-status" role="status"></span></div></li><li><span class="step-number">03</span><div><h3>设置人设与模型</h3><p>填写表达偏好，配置自己的模型接口并测试连通性。页面模式与互动管理不需要 X API；父帖增强、Lists 等能力再按需配置。</p></div></li><li><span class="step-number">04</span><div><h3>打开 X，开始回复与复盘</h3><p>把浮动入口拖到顺手的位置，选择“自然接话”或“补充观点”。需要整理评论时打开互动管理；写新帖时可在“为你推荐”中点击发帖优化。</p></div></li></ol></section>
+
+    <section class="boundary"><div class="wrap boundary-inner"><span class="boundary-icon" aria-hidden="true">↳</span><div><h2>AI 辅助起草，<br>最后一句，由你决定。</h2><p>不代替你判断，也不自动发布。页面读取范围和上下文都可能不完整，每条回复与优化结果都值得你再看一眼。</p></div><div class="boundary-notes"><span>✓ 用户确认后发布</span><span>✓ 互动记录保存在本机</span><span>✓ 不承诺自动涨粉或推荐效果</span></div></div></section>
+
+    <section class="faq section wrap" id="faq"><div><p class="eyebrow">GOOD TO KNOW</p><h2>你可能还想知道。</h2><p class="muted">开始之前，把边界说清楚。</p></div><div class="faq-list"><details open><summary>现在可以下载使用吗？</summary><p>可以下载 GitHub 内测版。当前采用手动安装方式，暂不上架 Chrome 商店；下载后请按页面指引加载已解压的扩展程序。</p></details><details><summary>需要自己配置 API 吗？会产生费用吗？</summary><p>AI 回复和发帖优化需要配置你自己的模型服务。页面模式回复、互动管理与未关注标识不依赖 X API；父帖增强、Lists 与趋势等功能才需要相应的 X 配置。实际费用以各服务商为准。</p></details><details><summary>互动管理能看到所有新评论吗？</summary><p>不能保证。它不调用 X API，只读取“通知 → 提及”和本人帖子评论页中已经加载的内容。折叠、尚未滚动加载、已删除或其他设备上的操作可能无法自动识别，因此保留手动更新与手动标记。</p></details><details><summary>发帖优化会保存“为你推荐”吗？</summary><p>不会长期保存。只有在 X 首页“为你推荐”中点击优化时，才按页面顺序读取最多 12 条已加载帖子作为本次参考；不会复制原文，也不代表 X 官方推荐概率。</p></details><details><summary>能读取完整的历史对话吗？</summary><p>不能保证。页面模式使用当前帖子及已经加载的上文；API 增强模式可尝试补充有限层级的父帖。帖子可见性和接口限制都会影响结果，缺少的信息需要人工核对。</p></details><details><summary>“未关注”是指对方没有关注我吗？</summary><p>不是。它表示你尚未关注这个账号，不等于对方没有回关你。只有能够确认关系时才显示，不仅限于蓝 V，也不自动关注或取关。</p></details><details><summary>我的数据会发送到哪里？</summary><p>插件设置、凭证和互动记录保存在当前浏览器本地。生成回复或优化帖子时，相关帖文、上下文、人设，以及本次读取的推荐快照会发送给你配置的模型服务商；只有启用 X API 功能时才请求 X 接口。本介绍页不收集凭证或反馈。</p></details><details><summary>已经安装了内测版，后续如何更新？</summary><p>在维护页导出安全配置备份，再检查 GitHub 最新版本并下载替换原扩展目录。回到 Chrome 扩展管理页点击“重新加载”即可。</p></details></div></section>
+
+    <section class="release wrap" id="download"><div><p class="eyebrow">DOWNLOAD</p><h2>下载 <span class="blue">X Reply Assistant</span></h2><p>官网负责功能介绍与发布说明，安装包通过 GitHub Release 提供。<br>暂不上架 Chrome 商店。</p></div><div class="release-action"><a class="button primary" href="https://github.com/nszhangkaikai-tech/x-reply-assistant/releases/latest" target="_blank" rel="noopener noreferrer">前往 GitHub 下载 <span aria-hidden="true">↗</span></a><span>当前为内测版 · 手机端可浏览介绍页</span></div></section>
+  </main>
+  <footer class="wrap"><a class="brand" href="#"><span class="brand-icon" aria-hidden="true">↳</span><span>X Reply<span class="brand-dot">.</span></span></a><p>独立开发的浏览器扩展，与 X 官方无隶属关系。</p><a href="#faq">使用与隐私说明 ↗</a></footer>
+</body>
+</html>

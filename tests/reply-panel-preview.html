@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>X Reply · 生成面板预览</title>
+  <link rel="stylesheet" href="../extension/content.css">
+  <style>
+    *{box-sizing:border-box}body{margin:0;padding:42px;background:#f3f6fb;color:#162034;font:14px/1.8 -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif}main{max-width:880px;margin:auto}header{display:flex;align-items:center;gap:12px;margin-bottom:34px}header span{background:#2660ed;color:#fff;border-radius:11px;width:36px;text-align:center;font-size:26px}h1{font-size:21px;margin:0}header p{margin:0;color:#7d8ca3;font-size:11px}.preview-grid{display:grid;grid-template-columns:1fr 420px;gap:30px;align-items:start}.example{background:#fff;border:1px solid #e1e7f1;border-radius:16px;padding:24px}.example-label{font-size:10px;letter-spacing:1px;color:#8a99af}.example h2{font-size:15px;margin:16px 0 5px}.example p{font-size:13px;color:#64758f;margin:0 0 20px}.example textarea{display:block;width:100%;min-height:170px;padding:13px;border:1px solid #dce4ef;border-radius:9px;resize:vertical;font:inherit;font-size:13px;line-height:1.9;color:#334969}.controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}.controls button{background:#fff;border:1px solid #dce5f3;border-radius:7px;padding:8px 11px;color:#546c91;cursor:pointer;font:inherit;font-size:11px}#preview-message{font-size:11px;color:#7f90a8;margin-top:15px}#xra-reply-panel{position:static;width:100%;max-height:none}#xra-generate-button{display:none}.preview-note{font-size:10px;color:#8b98ac;margin-top:24px}@media(max-width:760px){body{padding:22px}.preview-grid{grid-template-columns:1fr}.example{order:2}}@media(max-width:400px){body{padding:16px}}
+  </style>
+</head>
+<body>
+  <main>
+    <header><span>↳</span><div><h1>X Reply · 回复面板</h1><p>真实面板组件 / 匿名示例 / 不连接 X 或模型服务</p></div></header>
+    <div class="controls"><button type="button" id="preview-page">页面模式</button><button type="button" id="preview-api">API 上文示意</button><button type="button" id="preview-fallback">读取失败示意</button><button type="button" id="preview-error">生成错误示意</button></div>
+    <div class="preview-grid">
+      <section class="example"><span class="example-label">CONVERSATION EXAMPLE</span><h2>对方的新回复</h2><p>对，就是每次往回翻太费时间了。</p><label for="preview-editor">演示回复框</label><textarea id="preview-editor" placeholder="点击候选正文或“填入回复”，草稿会出现在这里。"></textarea><div id="preview-message" role="status">仅模拟编辑，不会发布任何内容。</div></section>
+      <div id="panel-slot"></div>
+    </div>
+    <p class="preview-note">上方按钮仅切换模拟状态。页面直接加载 extension/content.js 与 content.css，未复制另一套面板实现。</p>
+  </main>
+  <script>
+    window.chrome = {
+      runtime: {
+        onMessage: { addListener() {} },
+        sendMessage: async (message) => {
+          if (message.type === 'open-options') document.getElementById('preview-message').textContent = '已触发打开设置（预览不打开真实扩展设置）。';
+          if (message.type === 'generate-replies') {
+            document.getElementById('preview-message').textContent = '已模拟生成三条补充观点，未调用真实模型。';
+            return { ok: true, replies: previewReplies[message.replyMode] };
+          }
+          return { ok: true };
+        }
+      }
+    };
+  </script>
+  <script src="../extension/content.js"></script>
+  <script>
+    const previewReplies = {
+      natural: [
+        '是啊，光找上文就得翻好一会儿。',
+        '评论一多，几段对话很容易串起来。',
+        '如果回复时就能看到前几句，省事不少。'
+      ],
+      perspective: [
+        '关键是把同一段对话串起来，少翻记录。',
+        '回复时能同时看到前因，少花时间来回切换。',
+        '能认清同一段对话的前因，比多生成几条更重要。'
+      ]
+    };
+    function showPreview(mode) {
+      if (mode === 'error') renderError('模型暂时没有返回结果，请检查配置后重试。');
+      else renderReplies(previewReplies.natural, {
+        contextSource: mode === 'api' ? 'x-api' : 'page',
+        contextNotice: mode === 'fallback' ? 'api-failed' : mode,
+        contextMessages: mode === 'api' ? [{}, {}] : [{}]
+      });
+      document.getElementById('panel-slot').append(document.getElementById(PANEL_ID));
+    }
+    for (const mode of ['page', 'api', 'fallback', 'error']) {
+      document.getElementById(`preview-${mode}`).addEventListener('click', () => showPreview(mode));
+    }
+    showPreview('page');
+  </script>
+</body>
+</html>

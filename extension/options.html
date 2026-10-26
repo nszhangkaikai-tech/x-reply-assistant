@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>X Reply Assistant 设置</title>
+    <link rel="stylesheet" href="options.css">
+  </head>
+  <body>
+    <div class="topbar"><b>X REPLY</b><span>回复助手</span><span class="topbar-note">所有设置仅保存在当前浏览器</span></div>
+    <div class="shell">
+      <aside>
+        <div class="brand"><span class="brand-mark">X</span><div><strong>X Reply</strong><small>Reply Assistant</small></div></div>
+        <nav>
+          <button class="nav-item active" type="button" data-page="home">首页</button>
+          <button class="nav-item" type="button" data-page="interactions">互动管理</button>
+          <button class="nav-item" type="button" data-page="relationship">互动复盘</button>
+          <button class="nav-item" type="button" data-page="profile">回复人设</button>
+          <button class="nav-item" type="button" data-page="style">语言与风格</button>
+          <button class="nav-item" type="button" data-page="api">模型与 API</button>
+          <button class="nav-item" type="button" data-page="lists">Lists 清单</button>
+          <button class="nav-item" type="button" data-page="trends">Trends 热点</button>
+          <button class="nav-item" type="button" data-page="maintenance">维护与更新</button>
+        </nav>
+        <div class="sidebar-foot">点击候选直接填入；需要修改时点复制编辑。<span id="sidebar-version"></span></div>
+      </aside>
+      <main>
+        <section class="settings-page active" data-page="home">
+          <header class="page-header home-header"><div><p class="crumb">X REPLY　/　首页</p><h1>今日概览</h1><p>AI、X 账号和互动关系集中在一屏查看；数据只保存在当前浏览器。</p></div><p id="stats-date" class="stats-date"></p></header>
+          <div class="home-dashboard-grid">
+            <section class="home-dashboard-card" aria-label="今日数据">
+              <div class="home-card-heading"><div><p class="eyebrow">TODAY'S ACTIVITY</p><h2>今日数据</h2></div></div>
+              <div class="home-metrics three">
+                <article><p>AI 生成</p><strong id="today-generation">0</strong><span>次</span></article>
+                <article><p>发帖</p><strong id="today-posts">0</strong><span>条</span></article>
+                <article><p>回复</p><strong id="today-replies">0</strong><span>条</span></article>
+              </div>
+              <div class="home-card-foot"><span>累计 AI 生成 <b id="total-generation">0</b> 次</span><span>AI 等待 <b id="total-duration">0 分钟</b></span></div>
+            </section>
+
+            <section class="home-dashboard-card home-x-card" aria-label="今日 X 账号数据">
+              <div class="home-card-heading"><div><p class="eyebrow">X ACCOUNT ACTIVITY</p><h2>今日 X 数据</h2><p id="home-x-window" class="stats-date">08:00 起 · 尚未采集</p></div><button id="home-x-refresh" class="secondary compact-button" type="button" disabled>手动采集</button></div>
+              <div class="home-metrics four">
+                <article><p>发帖</p><strong id="home-x-posts">—</strong><span>条</span></article>
+                <article><p>回复</p><strong id="home-x-replies">—</strong><span>条</span></article>
+                <article><p>涨粉</p><strong id="home-x-followers">—</strong><span>净变化</span></article>
+                <article><p>曝光</p><strong id="home-x-impressions">—</strong><span>次</span></article>
+              </div>
+              <p id="home-x-progress" class="home-card-status"></p>
+              <p id="home-x-status" class="home-card-status" role="status">连接 X 账号后可手动采集。</p>
+            </section>
+
+            <section class="home-dashboard-card" aria-label="今日互动">
+              <div class="home-card-heading"><div><p class="eyebrow">TODAY'S INTERACTIONS</p><h2>今日互动</h2></div><button class="secondary compact-button" type="button" data-open-page="interactions">查看详情</button></div>
+              <div class="home-metrics four">
+                <article><p>互动用户</p><strong id="home-interaction-people">0</strong><span>人</span></article>
+                <article><p>已完成</p><strong id="home-interaction-complete">0</strong><span>人</span></article>
+                <article class="attention"><p>未回复</p><strong id="home-interaction-unreplied">0</strong><span>条</span></article>
+                <article class="attention"><p>未回访</p><strong id="home-interaction-unvisited">0</strong><span>人</span></article>
+              </div>
+              <p class="home-card-status">页面读取 · 不调用 X API</p>
+            </section>
+
+            <section class="home-dashboard-card" aria-label="双向互动累计">
+              <div class="home-card-heading"><div><p class="eyebrow">RELATIONSHIP REVIEW</p><h2>双向互动累计</h2></div><button class="secondary compact-button" type="button" data-open-page="relationship">查看详情</button></div>
+              <div class="home-metrics three">
+                <article><p>已记录账号</p><strong id="home-relationship-people">0</strong><span>人</span></article>
+                <article class="attention"><p>零回访</p><strong id="home-relationship-zero">0</strong><span>人</span></article>
+                <article class="attention"><p>低回访</p><strong id="home-relationship-low">0</strong><span>人</span></article>
+              </div>
+              <p class="home-card-status">按帖子 ID 去重 · 仅作关注复盘参考</p>
+            </section>
+          </div>
+        </section>
+
+        <section class="settings-page" data-page="interactions">
+          <header class="page-header interaction-header">
+            <div><p class="crumb">X REPLY　/　互动管理</p><h1>今天，还有谁没互动？</h1><p>整理当前 X 页面已经加载的评论，避免漏回，也方便安排回访。</p></div>
+            <div class="interaction-update"><div><button id="interaction-open-mentions" class="secondary" type="button">打开评论通知</button><button id="interaction-refresh" class="primary" type="button">从 X 页面更新</button></div><p id="interaction-updated-at" class="stats-date">尚未更新</p></div>
+          </header>
+          <div class="interaction-scope"><strong>统计范围</strong><span>不调用 X API，只读取“通知 → 提及”和你自己帖子的评论详情页。你在 X 发布回复后会自动更新“已回复”；在对方帖子下回复会自动更新“已回访”。手动标记继续作为兜底。</span></div>
+          <section class="stats-panel">
+            <div class="stats-heading"><div><p class="eyebrow">TODAY'S INTERACTIONS</p><h2>今日互动</h2></div><p id="interaction-date" class="stats-date"></p></div>
+            <div class="stats-grid interaction-stats">
+              <article><p>互动用户</p><strong id="interaction-people">0</strong><span>人</span></article>
+              <article><p>已完成互动</p><strong id="interaction-complete">0</strong><span>人</span></article>
+              <article class="needs-attention"><p>评论未回复</p><strong id="interaction-unreplied">0</strong><span>条</span></article>
+              <article class="needs-attention"><p>尚未回访</p><strong id="interaction-unvisited">0</strong><span>人</span></article>
+            </div>
+          </section>
+          <section class="panel interaction-panel">
+            <div class="interaction-toolbar">
+              <div class="interaction-tabs" role="tablist" aria-label="互动状态筛选">
+                <button class="active" type="button" data-interaction-filter="pending">待处理</button>
+                <button type="button" data-interaction-filter="reply">评论未回复</button>
+                <button type="button" data-interaction-filter="visit">尚未回访</button>
+                <button type="button" data-interaction-filter="done">已完成</button>
+                <button type="button" data-interaction-filter="all">全部</button>
+              </div>
+              <p id="interaction-result-count" class="stats-date">0 项记录</p>
+            </div>
+            <p id="interaction-status" class="hint" role="status"></p>
+            <div id="interaction-list" class="interaction-list"></div>
+            <div id="interaction-empty" class="interaction-empty">还没有这个分类的记录。</div>
+          </section>
+        </section>
+
+        <section class="settings-page" data-page="relationship">
+          <header class="page-header interaction-header">
+            <div><p class="crumb">X REPLY　/　互动复盘</p><h1>哪些互动，真正有来有往？</h1><p>按账号累计双方在不同帖子中的互动，方便后续整理关注关系。</p></div>
+            <div class="interaction-update"><div><button id="relationship-open-mentions" class="secondary" type="button">打开评论通知</button><button id="relationship-refresh" class="primary" type="button">从 X 页面更新</button></div><p id="relationship-updated-at" class="stats-date">尚未更新</p></div>
+          </header>
+          <div class="interaction-scope"><strong>统计范围</strong><span>不调用 X API。主动互动在你发布回复时按对方帖子 ID 去重记录；对方来访通过“通知 → 提及”和本人帖子评论页读取。</span></div>
+          <section class="panel relationship-panel">
+            <div class="panel-heading relationship-heading"><div><p class="eyebrow">RELATIONSHIP REVIEW</p><h2>双向互动累计</h2><p>按帖子 ID 记录你去对方帖子互动的次数，以及对方来你这里评论或回复的次数。同一条帖子只计算一次，不会自动取消关注。</p></div></div>
+            <div class="stats-grid relationship-stats">
+              <article><p>已记录账号</p><strong id="relationship-people">0</strong><span>人</span></article>
+              <article class="needs-attention"><p>零回访</p><strong id="relationship-zero">0</strong><span>人</span></article>
+              <article class="needs-attention"><p>低回访</p><strong id="relationship-low">0</strong><span>人</span></article>
+              <article><p>互动正常</p><strong id="relationship-balanced">0</strong><span>人</span></article>
+            </div>
+            <div class="relationship-controls" aria-label="互动账号筛选">
+              <label class="relationship-search"><span class="sr-only">搜索账号</span><input id="relationship-search" type="search" placeholder="搜索用户名或 @ID"></label>
+              <label class="relationship-select"><span>排序</span><select id="relationship-sort"><option value="risk">低回访优先</option><option value="outbound">我互动最多</option><option value="inbound">对方来访最多</option><option value="rate">回访比例最低</option></select></label>
+              <label class="relationship-select"><span>每页</span><select id="relationship-page-size"><option value="10">10 个</option><option value="20" selected>20 个</option><option value="50">50 个</option><option value="100">100 个</option></select></label>
+            </div>
+            <div class="interaction-toolbar relationship-toolbar">
+              <div class="interaction-tabs" role="tablist" aria-label="双向互动筛选">
+                <button class="active" type="button" data-relationship-filter="candidates">关注复盘</button>
+                <button type="button" data-relationship-filter="zero">零回访</button>
+                <button type="button" data-relationship-filter="low">低回访</button>
+                <button type="button" data-relationship-filter="balanced">互动正常</button>
+                <button type="button" data-relationship-filter="all">全部</button>
+              </div>
+              <p id="relationship-result-count" class="stats-date">筛选后 0 / 共 0 个账号</p>
+            </div>
+            <div id="relationship-list" class="relationship-list"></div>
+            <div id="relationship-empty" class="interaction-empty">还没有符合条件的累计互动记录。</div>
+            <div class="relationship-pagination" aria-label="互动账号翻页">
+              <button id="relationship-prev" class="secondary" type="button">上一页</button>
+              <span id="relationship-page-info">第 1 / 1 页</span>
+              <button id="relationship-next" class="secondary" type="button">下一页</button>
+            </div>
+            <p id="relationship-status" class="hint" role="status"></p>
+            <p class="hint relationship-rule">低回访：你累计互动至少 3 条不同帖子，对方累计互动少于你的一半；零回访单独标记。统计仅覆盖插件实际记录到的页面内容。</p>
+          </section>
+        </section>
+
+        <section class="settings-page" data-page="profile">
+          <header class="page-header"><div><p class="crumb">回复设置　/　回复人设</p><h1>让每条回复都像你自己写的。</h1><p>定义身份、观点、口吻和不能碰的表达。</p></div></header>
+          <section class="panel">
+            <div class="panel-heading"><div><p class="eyebrow">REPLY PERSONA</p><h2>回复人设</h2><p>这里写你的身份、习惯、偏好和禁忌。它只保存在浏览器本地。</p></div></div>
+            <label for="persona">人物性格 MD</label>
+            <textarea id="persona" rows="14" placeholder="# 身份\n独立 AI 产品创始人\n\n# 语气\n直接、克制、有具体观点。\n\n# 禁止\n不使用空泛的赞美或营销黑话。"></textarea>
+            <div class="import-row"><input id="file" type="file" accept=".md,text/markdown,text/plain"><span>可导入已有的 Markdown 人设文件</span></div>
+          </section>
+          <div class="page-actions"><p id="profile-status" class="save-status" role="status"></p><button id="save-profile" class="primary" type="button">保存人设</button></div>
+        </section>
+
+        <section class="settings-page" data-page="style">
+          <header class="page-header"><div><p class="crumb">回复设置　/　语言与风格</p><h1>决定它怎么说话。</h1><p>语言跟随原帖或固定指定；风格规则会附在每次生成请求里。</p></div></header>
+          <section class="panel">
+            <div class="panel-heading"><div><p class="eyebrow">VOICE CONTROL</p><h2>语言与风格</h2><p>控制回复用什么语言，以及要避开什么表达。</p></div></div>
+            <div class="form-grid">
+              <div><label for="reply-language">回复语言</label><select id="reply-language"><option value="follow">跟随原帖语言</option><option value="zh-CN">简体中文</option><option value="en">英文</option><option value="ja">日文</option><option value="ko">韩文</option><option value="es">西班牙文</option></select></div>
+              <div><label for="generation-mode">推理档位</label><select id="generation-mode"><option value="fast">快速模式</option><option value="balanced">平衡模式</option><option value="deep">深度模式</option></select></div>
+            </div>
+            <p class="hint">快速模式适合日常回复，不展示模型思考过程。</p>
+            <label for="reply-context-mode">回复上下文模式</label>
+            <select id="reply-context-mode" disabled>
+              <option value="page">页面模式（默认，不需要 X API）</option>
+              <option value="api">API 增强模式（需手动配置 X 授权）</option>
+            </select>
+            <p class="hint" id="reply-context-hint">页面模式使用当前帖及帖子详情页中已加载的上文；不会调用 X API 查找父帖。两种模式都需要配置 AI 模型服务，生成后由你确认发布。</p>
+            <button id="configure-context-api" class="secondary hidden" type="button">前往手动配置 X 授权</button>
+            <label class="toggle" for="de-ai"><input id="de-ai" type="checkbox" checked><span><b>去 AI 味</b><small>让模型遵守你维护的自然表达规则</small></span></label>
+            <label for="de-ai-prompt">去 AI 味规则</label>
+            <textarea id="de-ai-prompt" rows="7" placeholder="写清楚你希望避开什么表达、保留什么口吻。"></textarea>
+            <p class="hint">关闭开关后，这段规则不会发送给模型。</p>
+          </section>
+          <div class="page-actions"><p id="style-status" class="save-status" role="status"></p><button id="save-style" class="primary" type="button">保存语言与风格</button></div>
+        </section>
+
+        <section class="settings-page" data-page="api">
+          <header class="page-header"><div><p class="crumb">回复设置　/　模型与 API</p><h1>连接你的模型。</h1><p>每个服务商单独保存地址、Key 和模型，切换时不会覆盖。</p></div></header>
+          <section class="panel api-panel">
+            <div class="panel-heading"><div><p class="eyebrow">MODEL CONNECTION</p><h2>模型与 API</h2><p>保存后可单独测试这套配置的连通性。</p></div><strong id="api-status" role="status">未配置</strong></div>
+            <div class="form-grid">
+              <div><label for="provider">服务商</label><select id="provider"><option value="stepfun">阶跃星辰</option><option value="xiaomi">小米 MiMo</option><option value="openai">OpenAI</option><option value="deepseek">DeepSeek</option><option value="qwen">通义千问</option><option value="custom">自定义 OpenAI 兼容接口</option></select></div>
+              <div><label for="model-preset">模型选择</label><select id="model-preset"><option value="step-3.7-flash">step-3.7-flash（快速）</option><option value="step-3.5-flash">step-3.5-flash（快速）</option><option value="step-5-preview">step-5-preview（旗舰）</option><option value="custom">自定义模型</option></select></div>
+            </div>
+            <div id="stepfun-route-wrap" class="hidden"><label for="stepfun-route">阶跃连接方式</label><select id="stepfun-route"><option value="plan">Step Plan 订阅额度（推荐）</option><option value="direct">开放平台直连（需单独 API 额度）</option></select></div>
+            <label for="api-url">API 基地址或 Chat Completions 完整地址</label>
+            <input id="api-url" type="url" value="https://api.openai.com/v1/chat/completions">
+            <label for="api-key">API Key</label>
+            <input id="api-key" type="password" autocomplete="off" placeholder="仅保存在当前浏览器">
+            <label id="custom-model-label" for="model" class="hidden">自定义模型名称</label>
+            <input id="model" class="hidden" type="text" placeholder="输入模型名称">
+          </section>
+          <div class="page-actions"><p id="api-save-status" class="save-status" role="status"></p><div><button id="test-api" class="secondary" type="button">测试连通性</button><button id="save-api" class="primary" type="button">保存 API 设置</button></div></div>
+        </section>
+
+        <section class="settings-page" data-page="lists">
+          <header class="page-header"><div><p class="crumb">X REPLY　/　Lists 清单</p><h1>从清单发现内容，写出你的观点。</h1><p>选择二创或引用转发，修改草稿后带入 X 编辑框；最终由你确认发布。</p></div></header>
+          <section class="panel x-data-panel">
+            <div class="panel-heading"><div><p class="eyebrow">LISTS</p><h2>我的清单</h2><p>选择你拥有的清单，查看成员最新帖子；点击“二创”或“引用转发”时才会调用模型。</p></div><button id="load-x-lists" class="secondary" type="button">加载清单</button></div>
+            <p id="x-lists-empty" class="hint">连接账号后可读取清单。</p>
+            <div id="x-lists" class="x-lists"></div>
+            <p id="x-list-posts-status" class="hint" role="status">加载清单后，选择一个清单查看最新帖子。</p>
+            <div id="x-list-posts" class="x-lists"></div>
+          </section>
+        </section>
+
+        <section class="settings-page" data-page="trends">
+          <header class="page-header"><div><p class="crumb">X REPLY　/　Trends 热点</p><h1>查看全球中文热点。</h1><p>保存趋势令牌后，按需加载热点。</p></div></header>
+          <section class="panel x-data-panel">
+            <div class="panel-heading"><div><p class="eyebrow">TRENDS</p><h2>全球中文热点前十</h2><p>从 X 全球榜单最多 50 条中筛选中文名称，按原榜单顺序显示；不足 10 条时不会补造。仅在点击时读取。</p></div></div>
+            <label for="x-trend-bearer">X 应用 Bearer Token</label>
+            <input id="x-trend-bearer" type="password" autocomplete="off" placeholder="从 X Developer Console 复制应用 Bearer Token">
+            <div class="trend-controls"><button id="save-x-trend-bearer" class="secondary" type="button">保存趋势令牌</button><button id="load-x-trends" class="secondary" type="button">加载中文前十</button></div>
+            <p id="x-trend-bearer-status" class="hint" role="status"></p>
+            <p id="x-trends-status" class="hint" role="status">保存令牌后，点击按钮读取。</p>
+            <div id="x-trends" class="x-lists"></div>
+          </section>
+        </section>
+
+        <section class="settings-page" data-page="maintenance">
+          <header class="page-header"><div><p class="crumb">X REPLY　/　维护与更新</p><h1>运行状态，一眼看清。</h1><p>诊断数据只从当前浏览器读取，不会上传配置或凭证。</p></div></header>
+          <section class="panel maintenance-panel">
+            <div class="panel-heading"><div><p class="eyebrow">X API CONNECTION · OPTIONAL</p><h2>X 账号授权（可选）</h2><p>页面模式回复不需要这项配置。需要 API 增强上下文、清单或账号数据时，再填写自己的 X OAuth Client ID 并授权；配置和令牌仅保存在当前浏览器，不提供共享应用凭证。</p></div><strong id="x-api-status" role="status">未连接</strong></div>
+            <label for="x-client-id">OAuth 2.0 Client ID</label>
+            <div class="masked-input"><input id="x-client-id" type="password" autocomplete="off" placeholder="从 X Developer Console 的 OAuth 2.0 Keys 复制 Client ID"><button id="toggle-x-client-id" class="secondary" type="button" aria-controls="x-client-id" aria-pressed="false">显示</button></div>
+            <label>插件回调地址</label>
+            <p id="x-redirect-uri" class="readonly-value"></p>
+            <p class="hint">当前只申请 users.read、tweet.read、list.read 与 offline.access；不会代你发布内容。</p>
+            <p class="hint">连接账号不会自动开启 API 增强回复。请在“语言与风格 → 回复上下文模式”中选择并保存；父帖读取可能消耗你的 X API 额度。</p>
+          </section>
+          <div class="page-actions maintenance-auth-actions"><p id="x-api-save-status" class="save-status" role="status"></p><div><button id="save-x-api" class="secondary" type="button">保存 Client ID</button><button id="connect-x-api" class="primary" type="button">连接 X 账号</button></div></div>
+          <section class="panel maintenance-panel">
+            <div class="panel-heading"><div><p class="eyebrow">X PAGE DISPLAY</p><h2>X 页面显示</h2></div></div>
+            <label class="toggle" for="show-unfollowed-badge"><input id="show-unfollowed-badge" type="checkbox" disabled><span><b>显示“未关注”标签</b><small>只在确认你尚未关注该账号时显示；无法确认时不显示。关闭后会立即隐藏。</small></span></label>
+            <p id="unfollowed-badge-status" class="save-status" role="status"></p>
+          </section>
+          <section class="panel maintenance-panel">
+            <div class="panel-heading"><div><p class="eyebrow">SETTINGS BACKUP</p><h2>配置备份</h2><p>导出人设、语言风格、模型地址和页面偏好。备份不包含 API Key、Bearer Token、X 登录令牌或互动记录。</p></div></div>
+            <div class="backup-actions"><button id="export-settings" class="secondary" type="button">导出安全备份</button><label class="backup-file" for="import-settings-file">选择备份文件<input id="import-settings-file" type="file" accept="application/json,.json"></label><button id="import-settings" class="primary" type="button" disabled>导入并合并</button></div>
+            <p id="backup-status" class="hint" role="status">导入只覆盖备份中包含的配置，不会清空现有互动数据和密钥。</p>
+          </section>
+          <section class="panel maintenance-panel">
+            <div class="panel-heading"><div><p class="eyebrow">LOCAL DIAGNOSTICS</p><h2>本机诊断</h2><p>查看最近一次生成、模型连接测试和 X 授权状态。</p></div><button id="refresh-diagnostics" class="secondary" type="button">重新诊断</button></div>
+            <div class="diagnostic-grid">
+              <article><span>扩展版本</span><strong id="diagnostic-version">—</strong></article>
+              <article><span>模型配置</span><strong id="diagnostic-model">—</strong></article>
+              <article><span>API 连通性</span><strong id="diagnostic-api">—</strong></article>
+              <article><span>X 账号</span><strong id="diagnostic-x">—</strong></article>
+              <article><span>最近一次 AI 生成</span><strong id="diagnostic-generation">—</strong></article>
+              <article><span>本地数据占用</span><strong id="diagnostic-storage">—</strong></article>
+            </div>
+            <p id="diagnostic-status" class="hint" role="status"></p>
+          </section>
+          <section class="panel maintenance-panel">
+            <div class="panel-heading"><div><p class="eyebrow">ANNOUNCEMENTS</p><h2>公告</h2><p>本地公告随插件版本更新；连接 GitHub 后可查看最新发布说明。</p></div></div>
+            <article class="announcement"><strong>v0.1.64 · 优化时读取当前推荐</strong><p>在 X 首页“为你推荐”中点击“发帖优化”时，按页面顺序即时读取最多 12 条已加载帖子作为本次参考；不长期保存、不复制原文。</p></article>
+            <article id="remote-announcement" class="announcement hidden"><strong id="remote-announcement-title"></strong><p id="remote-announcement-body"></p></article>
+          </section>
+          <section class="panel maintenance-panel">
+            <div class="panel-heading"><div><p class="eyebrow">VERSION & UPDATES</p><h2>检查版本与下载更新</h2><p>未来发布到公开 GitHub 仓库后，在这里填入仓库地址即可检查最新 Release。</p></div></div>
+            <label for="github-repository">GitHub 仓库地址</label>
+            <input id="github-repository" type="url" placeholder="https://github.com/用户名/仓库名">
+            <div class="maintenance-actions"><button id="save-github-repository" class="secondary" type="button">保存地址</button><button id="check-update" class="primary" type="button">检查更新</button><button id="open-update-page" class="secondary" type="button" disabled>打开下载页面</button></div>
+            <p id="update-status" class="hint" role="status">尚未配置 GitHub 仓库，暂时无法在线检查或下载。</p>
+            <p class="hint">手动更新：先导出配置备份 → 下载新版本文件 → 替换原扩展目录 → 在 chrome://extensions 中点击“重新加载” → 刷新 X 页面。</p>
+          </section>
+        </section>
+      </main>
+    </div>
+    <script src="options.js"></script>
+  </body>
+</html>

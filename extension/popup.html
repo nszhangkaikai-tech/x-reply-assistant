@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>X Reply Assistant</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="mark">X</div>
+        <div class="header-copy">
+          <div class="header-title-row"><h1>X Reply Assistant</h1><a class="author-link" href="https://x.com/kaye77880" target="_blank" rel="noopener noreferrer" aria-label="访问作者 @kaye77880 的 X 主页">作者 @kaye77880</a></div>
+          <p>只生成草稿，不会自动发布</p>
+        </div>
+      </header>
+
+      <div class="top-cards">
+        <section class="summary">
+          <p class="eyebrow">当前服务商</p>
+          <select id="provider" aria-label="当前服务商">
+            <option value="stepfun">阶跃星辰</option>
+            <option value="xiaomi">小米 MiMo</option>
+            <option value="openai">OpenAI</option>
+            <option value="deepseek">DeepSeek</option>
+            <option value="qwen">通义千问</option>
+            <option value="custom">自定义兼容接口</option>
+          </select>
+          <p id="model" class="model">未选择模型</p>
+        </section>
+
+        <section class="status-card">
+          <div>
+            <p class="eyebrow">API 状态</p>
+            <p id="api-status" role="status">正在读取…</p>
+          </div>
+          <button id="test-api" type="button">测试连通性</button>
+        </section>
+      </div>
+
+      <section class="usage-card" aria-label="今日使用次数">
+        <div class="usage-heading">
+          <p class="eyebrow">今日插件操作</p>
+          <p class="usage-note">本机点击记录</p>
+        </div>
+        <div class="usage-grid">
+          <article><p>AI 生成</p><strong id="usage-count">0</strong><span>次</span></article>
+          <article><p>发帖</p><strong id="post-count">0</strong><span>条</span></article>
+          <article><p>回复</p><strong id="reply-count">0</strong><span>条</span></article>
+        </div>
+      </section>
+
+      <section class="x-stats-card" aria-label="今日 X 账号数据">
+        <div class="x-stats-heading"><strong>今日 X 数据</strong><button id="refresh-x-stats" type="button">手动采集</button></div>
+        <p id="x-stats-window" class="x-stats-note">08:00 起 · 尚未采集</p>
+        <div class="x-stats-grid">
+          <article><span>发帖</span><strong id="x-post-count">—</strong></article>
+          <article><span>回复</span><strong id="x-reply-count">—</strong></article>
+          <article><span>涨粉</span><strong id="x-follower-change">—</strong></article>
+          <article><span>帖子曝光</span><strong id="x-impressions">—</strong></article>
+        </div>
+        <p id="x-stats-progress" class="x-stats-note"></p>
+        <p id="x-stats-status" class="x-stats-note" role="status">连接 X 账号后可手动采集；每次采集可能消耗 X API 额度。</p>
+      </section>
+
+      <section class="howto">
+        <strong>怎么用</strong>
+        <p>在 X 的帖子下点 <b>AI</b>，点击候选可直接填入；需要修改时点右下角“编辑”，再粘贴进输入框。</p>
+      </section>
+
+      <button id="open-options" class="primary" type="button">打开完整设置</button>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>

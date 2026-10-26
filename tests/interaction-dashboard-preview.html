@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>X Reply · 互动管理设计稿</title>
+    <link rel="stylesheet" href="../extension/options.css">
+    <style>
+      .interaction-page { display: block; }
+      .page-header-actions { display: grid; justify-items: end; gap: 8px; }
+      .manual-note { margin: 0; color: var(--muted); font-size: 12px; }
+      .interaction-summary { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .interaction-summary article:last-child { border-right: 0; }
+      .interaction-summary strong { color: var(--ink); }
+      .interaction-summary .attention strong { color: #d97706; }
+      .scope-note { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 18px; padding: 13px 15px; border: 1px solid #d8e4f7; border-radius: 12px; background: #f5f8ff; color: #536782; font-size: 13px; }
+      .scope-note b { flex: none; color: var(--blue); }
+      .interaction-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+      .filter-tabs { display: flex; gap: 6px; padding: 4px; border: 1px solid var(--line); border-radius: 12px; background: #f4f7fc; }
+      .filter-tab { padding: 8px 13px; border-radius: 8px; background: transparent; color: #6a7b97; font-size: 13px; }
+      .filter-tab.active { background: #fff; color: var(--blue); box-shadow: 0 2px 7px rgba(36, 71, 125, .08); }
+      .interaction-count { margin: 0; color: var(--muted); font-size: 13px; }
+      .interaction-list { display: grid; gap: 12px; }
+      .interaction-card { display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; gap: 14px; align-items: start; padding: 18px; border: 1px solid var(--line); border-radius: 15px; background: #fff; }
+      .avatar { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; background: #e8efff; color: var(--blue); font-weight: 800; }
+      .person-line { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
+      .person-line strong { color: var(--ink); }
+      .handle, .time { color: var(--muted); font-size: 12px; }
+      .status-badge { padding: 3px 7px; border-radius: 999px; font-size: 11px; font-weight: 800; }
+      .status-badge.reply { background: #fff3db; color: #a15a00; }
+      .status-badge.visit { background: #eaf1ff; color: #3562c4; }
+      .status-badge.done { background: #e5f7ef; color: #217755; }
+      .interaction-copy { margin: 8px 0 7px; color: #2c3e59; line-height: 1.6; }
+      .source-line { margin: 0; color: var(--muted); font-size: 12px; }
+      .card-actions { display: flex; align-items: center; gap: 8px; }
+      .card-actions button { padding: 8px 11px; font-size: 12px; }
+      .text-button { background: transparent; color: #6c7c95; }
+      .empty-preview { display: none; padding: 42px 18px; border: 1px dashed #cdd9e9; border-radius: 14px; color: var(--muted); text-align: center; }
+      .interaction-card.is-done { opacity: .72; }
+      @media (max-width: 1060px) {
+        .interaction-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .interaction-card { grid-template-columns: 46px minmax(0, 1fr); }
+        .card-actions { grid-column: 2; justify-content: start; }
+      }
+      @media (max-width: 620px) {
+        .page-header-actions { justify-items: start; }
+        .interaction-toolbar { display: grid; }
+        .filter-tabs { overflow-x: auto; }
+        .interaction-summary { grid-template-columns: 1fr; }
+        .interaction-card { grid-template-columns: 38px minmax(0, 1fr); padding: 15px; }
+        .avatar { width: 38px; height: 38px; }
+        .card-actions { flex-wrap: wrap; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar"><b>X REPLY</b><span>回复助手</span><span class="topbar-note">设计预览 · 暂未接入真实数据</span></div>
+    <div class="shell">
+      <aside>
+        <div class="brand"><span class="brand-mark">X</span><div><strong>X Reply</strong><small>Reply Assistant</small></div></div>
+        <nav>
+          <button class="nav-item" type="button">首页</button>
+          <button class="nav-item active" type="button">互动管理</button>
+          <button class="nav-item" type="button">回复人设</button>
+          <button class="nav-item" type="button">语言与风格</button>
+          <button class="nav-item" type="button">模型与 API</button>
+          <button class="nav-item" type="button">Lists 清单</button>
+          <button class="nav-item" type="button">Trends 热点</button>
+          <button class="nav-item" type="button">维护与更新</button>
+        </nav>
+        <div class="sidebar-foot">互动数据只保存在当前浏览器。<span>不使用 X API，不会自动回复或发布。</span></div>
+      </aside>
+      <main>
+        <section class="interaction-page">
+          <header class="page-header">
+            <div><p class="crumb">X REPLY　/　互动管理</p><h1>今天，还有谁没互动？</h1><p>整理当前页面读取到的互动，避免漏回评论，也方便安排回访。</p></div>
+            <div class="page-header-actions"><button id="manual-update" class="primary" type="button">从当前 X 页面更新</button><p id="update-note" class="manual-note">上次更新：今天 15:32</p></div>
+          </header>
+
+          <div class="scope-note"><b>统计范围</b><span>仅记录插件在 X 页面实际读取到的内容；尚未滚动加载、折叠或已删除的评论可能不会出现。</span></div>
+
+          <section class="stats-panel">
+            <div class="stats-heading"><div><p class="eyebrow">TODAY'S INTERACTIONS</p><h2>今日互动</h2></div><p class="stats-date">2026 年 10 月 25 日</p></div>
+            <div class="stats-grid interaction-summary">
+              <article><p>互动用户</p><strong>12</strong><span>人</span></article>
+              <article><p>已完成互动</p><strong>7</strong><span>人</span></article>
+              <article class="attention"><p>评论未回复</p><strong>3</strong><span>条</span></article>
+              <article class="attention"><p>尚未回访</p><strong>2</strong><span>人</span></article>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="interaction-toolbar">
+              <div class="filter-tabs" role="tablist" aria-label="互动状态筛选">
+                <button class="filter-tab active" type="button" data-filter="pending">待处理 5</button>
+                <button class="filter-tab" type="button" data-filter="reply">评论未回复 3</button>
+                <button class="filter-tab" type="button" data-filter="visit">尚未回访 2</button>
+                <button class="filter-tab" type="button" data-filter="done">已完成 7</button>
+                <button class="filter-tab" type="button" data-filter="all">全部 12</button>
+              </div>
+              <p id="interaction-count" class="interaction-count">显示 5 项待处理</p>
+            </div>
+
+            <div id="interaction-list" class="interaction-list">
+              <article class="interaction-card" data-status="reply">
+                <span class="avatar">林</span>
+                <div><div class="person-line"><strong>林屿</strong><span class="handle">@linyu_ai</span><span class="status-badge reply">评论未回复</span><span class="time">14:26</span></div><p class="interaction-copy">这个功能如果评论很多，能不能优先把真正需要回答的问题排在前面？</p><p class="source-line">评论了你的帖子「做了一个承接上下文的 X 回复助手」</p></div>
+                <div class="card-actions"><button class="secondary" type="button">打开评论</button><button class="text-button mark-done" type="button">标记已回复</button></div>
+              </article>
+
+              <article class="interaction-card" data-status="visit">
+                <span class="avatar">周</span>
+                <div><div class="person-line"><strong>周末产品人</strong><span class="handle">@weekendmaker</span><span class="status-badge visit">尚未回访</span><span class="time">12:08</span></div><p class="interaction-copy">对方今天回复了你 2 次，你已经回复其中 1 条，但今天还没有去对方的帖子互动。</p><p class="source-line">最近互动：回复了你的产品演示帖</p></div>
+                <div class="card-actions"><button class="secondary" type="button">查看对方主页</button><button class="text-button mark-done" type="button">标记已回访</button></div>
+              </article>
+
+              <article class="interaction-card" data-status="reply">
+                <span class="avatar">M</span>
+                <div><div class="person-line"><strong>Maya</strong><span class="handle">@maya_builds</span><span class="status-badge reply">评论未回复</span><span class="time">10:41</span></div><p class="interaction-copy">Does it remember the full thread when the conversation goes beyond two rounds?</p><p class="source-line">评论了你的帖子「Context-aware replies are harder than they look」</p></div>
+                <div class="card-actions"><button class="secondary" type="button">打开评论</button><button class="text-button mark-done" type="button">标记已回复</button></div>
+              </article>
+
+              <article class="interaction-card" data-status="visit">
+                <span class="avatar">陈</span>
+                <div><div class="person-line"><strong>陈序</strong><span class="handle">@chenxu_dev</span><span class="status-badge visit">尚未回访</span><span class="time">09:17</span></div><p class="interaction-copy">对方点赞并回复了你的帖子，你已回复评论，今天尚未回访对方主页。</p><p class="source-line">最近互动：回复了你的插件内测帖</p></div>
+                <div class="card-actions"><button class="secondary" type="button">查看对方主页</button><button class="text-button mark-done" type="button">标记已回访</button></div>
+              </article>
+
+              <article class="interaction-card is-done" data-status="done">
+                <span class="avatar">苏</span>
+                <div><div class="person-line"><strong>苏打水</strong><span class="handle">@soda_notes</span><span class="status-badge done">已完成</span><span class="time">08:45</span></div><p class="interaction-copy">评论已回复，今天也已回访对方的帖子。</p><p class="source-line">完成时间：今天 09:03</p></div>
+                <div class="card-actions"><button class="secondary" type="button">查看记录</button></div>
+              </article>
+            </div>
+            <div id="empty-preview" class="empty-preview">这个分类目前没有记录。</div>
+          </section>
+        </section>
+      </main>
+    </div>
+    <script>
+      const tabs = [...document.querySelectorAll('.filter-tab')];
+      const cards = [...document.querySelectorAll('.interaction-card')];
+      const count = document.getElementById('interaction-count');
+      const empty = document.getElementById('empty-preview');
+      const labels = { pending: '项待处理', reply: '条评论未回复', visit: '位用户尚未回访', done: '项已完成', all: '项互动记录' };
+      tabs.forEach((tab) => tab.addEventListener('click', () => {
+        tabs.forEach((item) => item.classList.toggle('active', item === tab));
+        const filter = tab.dataset.filter;
+        let visible = 0;
+        cards.forEach((card) => {
+          const show = filter === 'all' || card.dataset.status === filter || (filter === 'pending' && card.dataset.status !== 'done');
+          card.style.display = show ? 'grid' : 'none';
+          if (show) visible += 1;
+        });
+        count.textContent = `显示 ${visible} ${labels[filter]}`;
+        empty.style.display = visible ? 'none' : 'block';
+      }));
+      document.querySelectorAll('.mark-done').forEach((button) => button.addEventListener('click', () => {
+        const card = button.closest('.interaction-card');
+        card.dataset.status = 'done';
+        card.classList.add('is-done');
+        const badge = card.querySelector('.status-badge');
+        badge.className = 'status-badge done';
+        badge.textContent = '已完成';
+        button.remove();
+      }));
+      document.getElementById('manual-update').addEventListener('click', (event) => {
+        event.currentTarget.textContent = '已读取当前页面';
+        document.getElementById('update-note').textContent = '刚刚更新 · 设计演示数据';
+      });
+    </script>
+  </body>
+</html>
