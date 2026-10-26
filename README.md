@@ -2,6 +2,11 @@
 
 Chrome extension that reads the X posts visible in the current tab, applies a locally stored persona Markdown file, and calls an OpenAI-compatible Chat Completions API for three reply drafts. It fills a selected draft into X's native reply editor but never publishes it.
 
+- [Product website](https://nszhangkaikai-tech.github.io/x-reply-assistant/)
+- [Download the latest release](https://github.com/nszhangkaikai-tech/x-reply-assistant/releases/latest)
+- Author X: [@kaye77880](https://x.com/kaye77880)
+- Telegram: [X Reply交流群](https://t.me/+VcnKeuCNrmNiMDY1)
+
 ## 1. Load the extension
 
 1. Open `chrome://extensions`.
