@@ -9,10 +9,17 @@ const countedPublishButtons = new WeakSet();
 let pendingListDraft = null;
 let fillingListDraft = false;
 let pendingReplyTarget = null;
+let capturedReplyThread = null;
 
 install();
 
 function install() {
+  document.addEventListener("click", event => {
+    const reply = event.target.closest?.('[data-testid="reply"]');
+    const article = reply?.closest('article[data-testid="tweet"]');
+    if (!article) return;
+    try { capturedReplyThread = readTargetThread(article); } catch { capturedReplyThread = null; }
+  }, true);
   trackPublishing();
   addComposerButton();
   addPostOptimizeButtons();
@@ -532,6 +539,9 @@ function readTargetThread(article) {
     || dialog?.querySelector('article[data-testid="tweet"]')
     || document.querySelector('article[data-testid="tweet"]');
   const targetMessage = readThreadMessage(targetArticle);
+  if (dialog && capturedReplyThread?.targetId && capturedReplyThread.targetId === targetMessage?.id) {
+    return { ...capturedReplyThread, target: targetMessage.text };
+  }
   const target = targetMessage?.text;
   const languageText = targetArticle?.querySelector('[data-testid="tweetText"]')?.innerText.trim() || target;
 
@@ -541,19 +551,22 @@ function readTargetThread(article) {
 
   const pagePostId = location.pathname.match(/^\/(?:[A-Za-z0-9_]+|i\/web)\/status\/(\d+)(?:\/|$)/)?.[1];
   const detailRoot = document.querySelector('main') || document.querySelector('[role="main"]');
-  const articles = pagePostId && pagePostId === targetMessage?.id && detailRoot
+  const articles = pagePostId && detailRoot
     ? [...detailRoot.querySelectorAll('article[data-testid="tweet"]')].filter((item) => !item.closest('[role="dialog"]'))
     : [];
-  const targetIndex = articles.findIndex((item) => readThreadMessage(item)?.id === targetMessage?.id);
+  const messages = articles.map(readThreadMessage).filter(Boolean);
+  const rootIndex = messages.findIndex(message => message.id === pagePostId);
+  const targetIndex = messages.findIndex(message => message.id === targetMessage?.id);
+  // 详情页根帖之前是上文；根帖之后的其他评论不能当作当前评论的父帖。
+  const candidates = rootIndex < 0 ? [] : targetMessage?.id === pagePostId
+    ? messages.slice(0, rootIndex)
+    : targetIndex > rootIndex ? messages.slice(0, rootIndex + 1) : [];
   const seen = new Set([targetMessage?.id].filter(Boolean));
-  const contextMessages = (targetIndex < 0 ? [] : articles.slice(0, targetIndex))
-    .map(readThreadMessage)
-    .filter((message) => {
-      if (!message?.text || (message.id && seen.has(message.id))) return false;
-      if (message.id) seen.add(message.id);
-      return true;
-    })
-    .slice(-3);
+  const contextMessages = candidates.filter(message => {
+    if (!message.text || !message.id || seen.has(message.id)) return false;
+    seen.add(message.id);
+    return true;
+  }).slice(-8);
 
   return {
     url: location.href,
@@ -571,7 +584,8 @@ function readThreadMessage(article) {
   const text = article.innerText.replace(/\n{3,}/g, "\n\n").trim();
   if (!text) return null;
 
-  const statusLink = [...article.querySelectorAll('a[href*="/status/"]')]
+  const timeLink = article.querySelector('time')?.closest('a[href*="/status/"]');
+  const statusLink = timeLink?.getAttribute('href') || [...article.querySelectorAll('a[href*="/status/"]')]
     .map((link) => link.getAttribute("href") || "")
     .find((href) => /\/[A-Za-z0-9_]+\/status\/\d+/.test(href));
   const match = statusLink?.match(/\/([A-Za-z0-9_]+)\/status\/(\d+)/);
@@ -833,19 +847,43 @@ function renderReplyCandidates(group, replies, panel) {
 }
 
 function contextBadge(thread) {
-  const badge = document.createElement("p");
+  const badge = document.createElement("div");
   const connected = thread.contextSource === "x-api";
-  const count = thread.contextMessages?.length || 0;
+  const messages = (thread.contextMessages || []).filter(message => message?.text?.trim());
+  const count = messages.length;
   const fallback = {
     "api-unconfigured": "X 授权未配置，已回退页面模式",
     "api-target-missing": "未识别到帖文 ID，已回退页面模式",
     "api-empty": "API 未返回父帖，已回退页面模式",
     "api-failed": "API 读取失败，已回退页面模式"
   }[thread.contextNotice];
-  badge.className = `xra-context-status ${connected ? "xra-context-status-success" : fallback ? "xra-context-status-warning" : "xra-context-status-page"}`;
-  badge.textContent = connected
-    ? `✓ API 增强模式 · 已读取 ${count} 条上文，不保证对话完整`
-    : `${fallback ? `! ${fallback}` : "页面模式（未调用 X API）"} · ${count ? `已提取 ${count} 条页面上文，请核对关联` : "仅参考当前帖，未读取到上文"}`;
+  badge.className = `xra-context-status ${count ? "xra-context-status-success" : "xra-context-status-warning"}`;
+  const status = document.createElement("p");
+  status.style.margin = "0";
+  status.textContent = `${connected ? "API 模式" : "页面模式（未调用 X API）"} · ${count ? `✓ 已读取上下文：${count} 条上文，已用于本次回复` : "⚠ 未读取到上下文：本次仅根据当前帖生成回复"}`;
+  badge.append(status);
+  if (fallback) {
+    const notice = document.createElement("p");
+    notice.textContent = fallback;
+    badge.append(notice);
+  }
+  if (count) {
+    const details = document.createElement("details");
+    const summary = document.createElement("summary");
+    summary.textContent = "查看本次读取的上下文";
+    details.append(summary);
+    messages.forEach((message, index) => {
+      const item = document.createElement("p");
+      item.style.whiteSpace = "pre-wrap";
+      item.textContent = `${index + 1}. ${message.author || ""}\n${message.text}`;
+      details.append(item);
+    });
+    badge.append(details);
+  } else {
+    const hint = document.createElement("p");
+    hint.textContent = "如需承接上文，请打开目标评论的详情页，确认原帖和上文已加载后重新生成。";
+    badge.append(hint);
+  }
   return badge;
 }
 

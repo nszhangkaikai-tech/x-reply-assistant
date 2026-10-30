@@ -22,8 +22,25 @@
   white-space: nowrap;
 }
 
+#xra-followback-tools {
+  box-sizing: border-box;
+  padding: 13px 16px;
+  border-bottom: 1px solid rgba(83, 100, 113, .35);
+  color: inherit;
+  font: 14px/1.5 system-ui, sans-serif;
+}
+#xra-followback-tools * { box-sizing: border-box; }
+.xra-followback-heading, .xra-followback-heading > div { display: flex; align-items: center; gap: 9px; }
+.xra-followback-heading { justify-content: space-between; }
+#xra-followback-tools select, #xra-followback-tools button { padding: 7px 11px; border: 1px solid rgba(83, 100, 113, .55); border-radius: 999px; background: transparent; color: inherit; font: 600 13px system-ui, sans-serif; cursor: pointer; }
+#xra-followback-tools button { border-color: #1d9bf0; color: #1d9bf0; }
+#xra-followback-tools p { margin: 8px 0 0; color: #71767b; font-size: 12px; }
+[data-testid="UserCell"].xra-followback-hidden { height: 1px !important; min-height: 1px !important; padding: 0 !important; overflow: hidden !important; opacity: 0; pointer-events: none; }
+.xra-followback-badge { display: inline-flex; margin-left: 5px; padding: 2px 6px; border-radius: 6px; background: rgba(244, 33, 46, .1); color: #f4212e; font: 600 11px/1.5 system-ui, sans-serif; white-space: nowrap; }
+
 @media (prefers-color-scheme: dark) {
   .xra-unfollowed-badge { background: #123b36; color: #73e3cf; }
+  .xra-followback-badge { background: rgba(244, 33, 46, .16); color: #ff7a84; }
 }
 
 #xra-generate-button:disabled { opacity: .7; cursor: wait; }

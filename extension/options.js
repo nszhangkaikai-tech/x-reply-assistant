@@ -23,6 +23,7 @@ const todayReplies = document.getElementById("today-replies");
 const totalDuration = document.getElementById("total-duration");
 const totalGeneration = document.getElementById("total-generation");
 const statsDate = document.getElementById("stats-date");
+const homeXMode = document.getElementById("home-x-mode");
 const homeXRefresh = document.getElementById("home-x-refresh");
 const homeXWindow = document.getElementById("home-x-window");
 const homeXProgress = document.getElementById("home-x-progress");
@@ -65,6 +66,14 @@ const relationshipSort = document.getElementById("relationship-sort");
 const relationshipPageSize = document.getElementById("relationship-page-size");
 const relationshipPrev = document.getElementById("relationship-prev");
 const relationshipNext = document.getElementById("relationship-next");
+const followbackAccount = document.getElementById("followback-account");
+const followbackSearch = document.getElementById("followback-search");
+const followbackSort = document.getElementById("followback-sort");
+const followbackPageSize = document.getElementById("followback-page-size");
+const followbackPrev = document.getElementById("followback-prev");
+const followbackNext = document.getElementById("followback-next");
+const followbackList = document.getElementById("followback-list");
+const followbackEmpty = document.getElementById("followback-empty");
 const exportSettings = document.getElementById("export-settings");
 const importSettingsFile = document.getElementById("import-settings-file");
 const importSettings = document.getElementById("import-settings");
@@ -92,10 +101,15 @@ let interactionLastUpdated = null;
 let interactionProfiles = [];
 let relationshipFilter = "candidates";
 let relationshipPage = 1;
+let followbackAccounts = {};
+let followbackRecords = {};
+let followbackFilter = "non";
+let followbackPage = 1;
+let followbackLoadId = 0;
 
-document.getElementById("sidebar-version").textContent = `v${installedVersion} · 2026-10-26`;
+document.getElementById("sidebar-version").textContent = `v${installedVersion} · 2026-10-30`;
 
-chrome.storage.local.get(["personaMarkdown", "apiUrl", "apiKey", "model", "provider", "providerConfigs", "replyLanguage", "deAi", "deAiPrompt", "generationMode", "replyContextMode", "usageDate", "usageCount", "publishDate", "postCount", "replyCount", "totalGenerationCount", "totalGenerationDurationMs", "xApiClientId", "xTrendBearerToken", "githubRepository", "showUnfollowedBadge", "xDailySummary", "interactionRecords", "interactionUpdatedAt", "interactionProfiles"], async (settings) => {
+chrome.storage.local.get(["personaMarkdown", "apiUrl", "apiKey", "model", "provider", "providerConfigs", "replyLanguage", "deAi", "deAiPrompt", "generationMode", "replyContextMode", "usageDate", "usageCount", "publishDate", "postCount", "replyCount", "totalGenerationCount", "totalGenerationDurationMs", "xApiClientId", "xTrendBearerToken", "githubRepository", "showUnfollowedBadge", "xDailySummary", "interactionRecords", "interactionUpdatedAt", "interactionProfiles", "followbackAccounts"], async (settings) => {
   persona.value = settings.personaMarkdown || "";
   providerConfigs = settings.providerConfigs || {};
   provider.value = settings.provider || detectProvider(settings.apiUrl || "");
@@ -111,6 +125,8 @@ chrome.storage.local.get(["personaMarkdown", "apiUrl", "apiKey", "model", "provi
   generationMode.value = settings.generationMode || "fast";
   replyContextMode.value = settings.replyContextMode === "api" ? "api" : "page";
   replyContextMode.disabled = false;
+  homeXMode.value = replyContextMode.value;
+  homeXMode.disabled = false;
   updateContextModeHint();
   xClientId.value = settings.xApiClientId || "";
   xTrendBearer.value = settings.xTrendBearerToken || "";
@@ -127,15 +143,24 @@ chrome.storage.local.get(["personaMarkdown", "apiUrl", "apiKey", "model", "provi
   interactionProfiles = Array.isArray(settings.interactionProfiles) ? settings.interactionProfiles : [];
   interactionLastUpdated = settings.interactionUpdatedAt || null;
   renderInteractions(settings.interactionUpdatedAt);
+  await setFollowbackAccounts(settings.followbackAccounts);
   await refreshApiStatus();
   await refreshXApiStatus();
   if (!homeXRefresh.disabled) showHomeXStats(settings.xDailySummary);
+  const initialPage = location.hash.slice(1);
+  if (document.querySelector(`.settings-page[data-page="${CSS.escape(initialPage)}"]`)) showPage(initialPage);
 });
 
 document.querySelectorAll(".nav-item").forEach((item) => item.addEventListener("click", () => showPage(item.dataset.page)));
 document.querySelectorAll("[data-open-page]").forEach((item) => item.addEventListener("click", () => showPage(item.dataset.openPage)));
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== "local") return;
+  if (changes.replyContextMode) {
+    replyContextMode.value = changes.replyContextMode.newValue === "api" ? "api" : "page";
+    homeXMode.value = replyContextMode.value;
+    updateContextModeHint();
+    void refreshXApiStatus();
+  }
   if (changes.showUnfollowedBadge && !showUnfollowedBadge.disabled) {
     showUnfollowedBadge.checked = changes.showUnfollowedBadge.newValue !== false;
   }
@@ -148,6 +173,12 @@ chrome.storage.onChanged.addListener((changes, area) => {
       renderInteractions(stored.interactionUpdatedAt);
     });
   }
+  if (changes.followbackAccounts) void setFollowbackAccounts(changes.followbackAccounts.newValue);
+  const recordsKey = followbackAccount.value ? `followbackRecords:${followbackAccount.value}` : "";
+  if (recordsKey && changes[recordsKey]) {
+    followbackRecords = changes[recordsKey].newValue || {};
+    renderFollowback();
+  }
   if (changes.xApiAuth) {
     void refreshXApiStatus().then(async () => {
       if (!homeXRefresh.disabled) showHomeXStats((await chrome.storage.local.get("xDailySummary")).xDailySummary);
@@ -159,7 +190,19 @@ chrome.storage.onChanged.addListener((changes, area) => {
 });
 document.getElementById("save-profile").addEventListener("click", saveProfile);
 document.getElementById("save-style").addEventListener("click", saveStyle);
-replyContextMode.addEventListener("change", updateContextModeHint);
+async function saveXReadMode(mode) {
+  await chrome.storage.local.set({ replyContextMode: mode });
+  replyContextMode.value = mode;
+  homeXMode.value = mode;
+  updateContextModeHint();
+  await refreshXApiStatus();
+  document.getElementById("home-x-switch-page").classList.add("hidden");
+  homeXStatus.textContent = mode === "page"
+    ? "页面模式已生效，不使用 X API。请打开自己的 X 主页或回复页后采集。"
+    : "API 模式已生效，采集使用 X API 额度。";
+}
+homeXMode.addEventListener("change", () => saveXReadMode(homeXMode.value));
+replyContextMode.addEventListener("change", () => saveXReadMode(replyContextMode.value));
 configureContextApi.addEventListener("click", () => showPage("maintenance"));
 document.getElementById("save-api").addEventListener("click", () => saveApi(true));
 document.getElementById("save-x-api").addEventListener("click", saveXApiConfig);
@@ -193,20 +236,37 @@ relationshipSort.addEventListener("change", () => { relationshipPage = 1; render
 relationshipPageSize.addEventListener("change", () => { relationshipPage = 1; renderRelationships(); });
 relationshipPrev.addEventListener("click", () => { relationshipPage = Math.max(1, relationshipPage - 1); renderRelationships(); });
 relationshipNext.addEventListener("click", () => { relationshipPage += 1; renderRelationships(); });
+followbackAccount.addEventListener("change", () => { followbackPage = 1; void loadFollowbackRecords(); });
+followbackSearch.addEventListener("input", () => { followbackPage = 1; renderFollowback(); });
+followbackSort.addEventListener("change", () => { followbackPage = 1; renderFollowback(); });
+followbackPageSize.addEventListener("change", () => { followbackPage = 1; renderFollowback(); });
+followbackPrev.addEventListener("click", () => { followbackPage = Math.max(1, followbackPage - 1); renderFollowback(); });
+followbackNext.addEventListener("click", () => { followbackPage += 1; renderFollowback(); });
+document.querySelectorAll("[data-followback-filter]").forEach((button) => button.addEventListener("click", () => {
+  followbackFilter = button.dataset.followbackFilter;
+  followbackPage = 1;
+  document.querySelectorAll("[data-followback-filter]").forEach((item) => item.classList.toggle("active", item === button));
+  renderFollowback();
+}));
+document.getElementById("followback-open-x").addEventListener("click", () => {
+  const handle = followbackAccounts[followbackAccount.value]?.handle;
+  chrome.tabs.create({ url: handle ? `https://x.com/${encodeURIComponent(handle)}/following` : "https://x.com/home" });
+});
 document.getElementById("refresh-diagnostics").addEventListener("click", refreshDiagnostics);
 homeXRefresh.addEventListener("click", async () => {
   homeXBusy = true;
   homeXRefresh.disabled = true;
   homeXStatus.textContent = "正在采集 X 账号数据，请稍候…";
   try {
-    const result = await chrome.runtime.sendMessage({ type: "collect-x-daily-stats" });
+    const result = await chrome.runtime.sendMessage({ type: "collect-x-daily-stats", mode: homeXMode.value });
     if (!result?.ok) throw new Error(result?.error || "采集失败");
     showHomeXStats(result.stats);
   } catch (error) {
-    homeXStatus.textContent = `采集失败：${error.message}`;
+    homeXStatus.textContent = /402|credits depleted/i.test(error.message) ? "X API 额度不足。可在上方选择页面模式继续采集，无需充值。保留上次成功数据。" : `采集失败：${error.message}。保留上次成功数据。`;
+    document.getElementById("home-x-switch-page").classList.toggle("hidden", replyContextMode.value !== "api");
   } finally {
     homeXBusy = false;
-    homeXRefresh.disabled = !homeXConnected;
+    homeXRefresh.disabled = replyContextMode.value === "api" && !homeXConnected;
   }
 });
 showUnfollowedBadge.addEventListener("change", async () => {
@@ -287,6 +347,124 @@ function showPage(page) {
   if (page === "maintenance") refreshDiagnostics();
   if (page === "interactions") renderInteractions();
   if (page === "relationship") renderRelationships();
+  if (page === "followback") renderFollowback();
+  if (location.hash !== `#${page}`) history.replaceState(null, "", `#${page}`);
+}
+
+globalThis.addEventListener?.("hashchange", () => {
+  const page = location.hash.slice(1);
+  if (document.querySelector(`.settings-page[data-page="${CSS.escape(page)}"]`)) showPage(page);
+});
+
+async function setFollowbackAccounts(value) {
+  followbackAccounts = value && typeof value === "object" ? value : {};
+  const current = followbackAccount.value;
+  const accounts = Object.values(followbackAccounts).filter((account) => account?.ownerId && XRAFollowbackCore.validHandle(account.handle));
+  accounts.sort((left, right) => Number(right.updatedAt || 0) - Number(left.updatedAt || 0));
+  followbackAccount.replaceChildren();
+  if (!accounts.length) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = "尚未扫描";
+    followbackAccount.append(option);
+  } else {
+    for (const account of accounts) {
+      const option = document.createElement("option");
+      option.value = account.ownerId;
+      option.textContent = `@${account.handle}`;
+      followbackAccount.append(option);
+    }
+    followbackAccount.value = accounts.some((account) => account.ownerId === current) ? current : accounts[0].ownerId;
+  }
+  followbackPage = 1;
+  await loadFollowbackRecords();
+}
+
+async function loadFollowbackRecords() {
+  const loadId = ++followbackLoadId;
+  const ownerId = followbackAccount.value;
+  if (!ownerId) {
+    followbackRecords = {};
+    renderFollowback();
+    return;
+  }
+  const key = `followbackRecords:${ownerId}`;
+  const stored = await chrome.storage.local.get(key);
+  if (loadId !== followbackLoadId || followbackAccount.value !== ownerId) return;
+  followbackRecords = stored[key] && typeof stored[key] === "object" ? stored[key] : {};
+  renderFollowback();
+}
+
+function renderFollowback() {
+  const meta = followbackAccounts[followbackAccount.value];
+  const records = Object.values(followbackRecords).filter((record) => record?.id && XRAFollowbackCore.validHandle(record.handle));
+  const counts = { non: 0, returned: 0, pending: 0 };
+  for (const record of records) counts[XRAFollowbackCore.recordStatus(record, meta?.scanId)]++;
+  document.getElementById("followback-total").textContent = records.length;
+  document.getElementById("followback-non").textContent = counts.non;
+  document.getElementById("followback-returned").textContent = counts.returned;
+  document.getElementById("followback-pending").textContent = counts.pending;
+  document.getElementById("followback-updated-at").textContent = meta?.updatedAt
+    ? `最近扫描：${new Date(meta.updatedAt).toLocaleString("zh-CN", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}`
+    : "尚未扫描";
+  document.getElementById("followback-scan-note").textContent = meta
+    ? `@${meta.handle} · 本轮页面已读取 ${Number(meta.observedCount || 0)} 人；继续滚动 Following 页面可增加覆盖。`
+    : "先打开自己的 Following 页面并向下滚动。";
+
+  const query = followbackSearch.value.trim().replace(/^@/, "").toLowerCase();
+  const visible = records.filter((record) => {
+    const state = XRAFollowbackCore.recordStatus(record, meta?.scanId);
+    if (followbackFilter !== "all" && state !== followbackFilter) return false;
+    return !query || record.handle.toLowerCase().includes(query) || String(record.name || "").toLowerCase().includes(query);
+  });
+  visible.sort((left, right) => {
+    if (followbackSort.value === "first") return Number(left.firstSeenAt || 0) - Number(right.firstSeenAt || 0);
+    if (followbackSort.value === "handle") return left.handle.localeCompare(right.handle, "zh-CN");
+    return Number(right.lastCheckedAt || 0) - Number(left.lastCheckedAt || 0);
+  });
+  const pageSize = Number(followbackPageSize.value) || 20;
+  const pageCount = Math.max(1, Math.ceil(visible.length / pageSize));
+  followbackPage = Math.min(Math.max(1, followbackPage), pageCount);
+  const pageRecords = visible.slice((followbackPage - 1) * pageSize, followbackPage * pageSize);
+  document.getElementById("followback-result-count").textContent = `筛选后 ${visible.length} / 共 ${records.length} 个账号`;
+  document.getElementById("followback-page-info").textContent = `第 ${followbackPage} / ${pageCount} 页`;
+  followbackPrev.disabled = followbackPage <= 1;
+  followbackNext.disabled = followbackPage >= pageCount;
+  followbackList.replaceChildren(...pageRecords.map((record) => createFollowbackItem(record, meta?.scanId)));
+  followbackEmpty.style.display = visible.length ? "none" : "block";
+}
+
+function createFollowbackItem(record, scanId) {
+  const state = XRAFollowbackCore.recordStatus(record, scanId);
+  const item = document.createElement("article");
+  item.className = "relationship-item followback-item";
+  const person = document.createElement("div");
+  person.className = "relationship-person";
+  const name = document.createElement("strong");
+  name.textContent = record.name || record.handle;
+  const handle = document.createElement("small");
+  handle.textContent = `@${record.handle}`;
+  person.append(name, handle);
+  const firstSeen = relationshipMetric("首次发现", formatFollowbackTime(record.firstSeenAt));
+  const lastChecked = relationshipMetric("最近检查", state === "pending" ? "本轮未加载" : formatFollowbackTime(record.lastCheckedAt));
+  const actions = document.createElement("div");
+  actions.className = "relationship-actions";
+  const badge = document.createElement("span");
+  badge.className = `interaction-badge ${state}`;
+  badge.textContent = state === "non" ? "未回关" : state === "returned" ? "新增回关" : "待复查";
+  const open = document.createElement("button");
+  open.type = "button";
+  open.className = "plain";
+  open.textContent = "查看主页";
+  open.addEventListener("click", () => chrome.tabs.create({ url: `https://x.com/${encodeURIComponent(record.handle)}` }));
+  actions.append(badge, open);
+  item.append(person, firstSeen, lastChecked, actions);
+  return item;
+}
+
+function formatFollowbackTime(value) {
+  if (!Number.isFinite(Number(value))) return "—";
+  return new Date(Number(value)).toLocaleString("zh-CN", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
 async function refreshInteractions() {
@@ -780,7 +958,7 @@ function showHomeXStats(stats) {
       document.getElementById(id).textContent = "—";
     }
     homeXProgress.textContent = "";
-    homeXStatus.textContent = "点击“手动采集”读取 X 数据；每次采集可能消耗 X API 额度。";
+    homeXStatus.textContent = "点击“手动采集”读取 X 数据；页面模式请先打开自己的主页或回复页；API 模式可能消耗额度。";
     return;
   }
   const time = new Date(stats.collectedAt).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
@@ -797,6 +975,12 @@ function showHomeXStats(stats) {
   homeXStatus.textContent = notes.join(" ") || "仅在点击时读取 X API；数据保存在本机。";
 }
 
+document.getElementById("home-x-switch-page").addEventListener("click", async () => {
+  await saveXReadMode("page");
+  document.getElementById("home-x-switch-page").classList.add("hidden");
+  homeXStatus.textContent = "已切换页面模式，请打开自己的 X 主页或回复页后手动采集。";
+});
+
 async function saveProfile() {
   await chrome.storage.local.set({ personaMarkdown: persona.value.trim() });
   setStatus("profile", "人设已保存到浏览器本地。", true);
@@ -811,6 +995,7 @@ async function saveStyle() {
     generationMode: generationMode.value,
     replyContextMode: replyContextMode.value
   });
+  await refreshXApiStatus();
   setStatus("style", replyContextMode.value === "api"
     ? "已保存 API 增强模式。请确认已在“维护与更新”配置自己的 X 授权；未配置或读取失败时回退到页面内容。"
     : "已保存页面模式。回复不会调用 X API；AI 模型配置仍然需要。", true);
@@ -821,7 +1006,7 @@ function updateContextModeHint() {
   configureContextApi.classList.toggle("hidden", !apiEnabled);
   replyContextHint.textContent = apiEnabled
     ? "保存后启用：使用你手动配置的 X 授权补充父帖，可能消耗 X API 额度。未配置或读取失败时回退到页面内容并提示；不保证获得完整对话。两种模式都需要 AI 模型服务。"
-    : "页面模式使用当前帖及帖子详情页中已加载的上文，不调用 X API 查找父帖。信息流或通知页不会把相邻帖子当作上文。两种模式都需要 AI 模型服务，生成后由你确认发布。";
+    : "此设置同时控制回复上下文和今日 X 数据。页面模式读取详情页已加载的上文及自己主页、回复页的统计，不调用 X API。信息流或通知页不会把相邻帖子当作上文。两种模式都需要 AI 模型服务，生成后由你确认发布。";
 }
 
 async function saveApi(showMessage) {
@@ -921,8 +1106,8 @@ async function refreshXApiStatus() {
   const result = await chrome.runtime.sendMessage({ type: "get-x-api-status" });
   const status = result?.status;
   homeXConnected = Boolean(status?.connected);
-  homeXRefresh.disabled = homeXBusy || !homeXConnected;
-  if (!homeXConnected) {
+  homeXRefresh.disabled = homeXBusy || (replyContextMode.value === "api" && !homeXConnected);
+  if (!homeXConnected && replyContextMode.value === "api") {
     showHomeXStats(null);
     homeXStatus.textContent = "请先到“维护与更新”连接 X 账号。";
   }

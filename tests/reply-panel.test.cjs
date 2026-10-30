@@ -8,7 +8,7 @@ function panelHarness(sendMessage = async () => ({ ok: true })) {
   const elements = [];
   const createElement = (tag) => {
     const element = {
-      tag, children: [], attrs: {}, handlers: {}, hidden: false, isConnected: true,
+      tag, children: [], attrs: {}, handlers: {}, style: {}, hidden: false, isConnected: true,
       append(...children) { this.children.push(...children); },
       replaceChildren(...children) { this.children = children; },
       setAttribute(key, value) { this.attrs[key] = value; },
@@ -77,7 +77,7 @@ test('failed mode can retry without losing the other three drafts', async () => 
   assert.equal(panels[1].children.length, 3);
   assert.equal(requests, 2);
   await tabs[0].handlers.click();
-  assert.equal(panels[0].children[0].children[1].textContent, 'Original one');
+  assert.equal(panels[0].children[0].children[0].children[1].textContent, 'Original one');
 });
 
 test('rapid switching does not duplicate requests or replace the currently selected mode', async () => {
@@ -112,15 +112,13 @@ test('late responses never reopen a closed panel', async () => {
 });
 
 test('text click and explicit fill both insert the selected draft, never publish', () => {
-  for (const buttonClass of ['xra-candidate-text', 'xra-fill-button']) {
-    const { context, elements, byClass } = panelHarness();
-    let inserted;
-    context.quickInsertReply = (reply) => { inserted = reply; };
-    context.renderReplies(['First', 'Second', 'Third']);
-    byClass(buttonClass)[1].handlers.click();
-    assert.equal(inserted, 'Second');
-    assert(elements.find(e => e.id === 'xra-reply-panel').removed);
-  }
+  const { context, elements, byClass } = panelHarness();
+  let inserted;
+  context.quickInsertReply = (reply) => { inserted = reply; };
+  context.renderReplies(['First', 'Second', 'Third']);
+  byClass('xra-candidate-text')[1].handlers.click();
+  assert.equal(inserted, 'Second');
+  assert(elements.find(e => e.id === 'xra-reply-panel').removed);
 });
 
 test('copy-edit and close remain available', async () => {
@@ -143,7 +141,7 @@ test('fill and copy failures retain an error message, settings entry, and close'
   const { context, elements, byClass } = panelHarness();
   context.quickInsertReply = () => { throw Error('No editor'); };
   context.renderReplies(['First', 'Second', 'Third']);
-  byClass('xra-fill-button')[0].handlers.click();
+  byClass('xra-candidate-text')[0].handlers.click();
   assert.equal(byClass('xra-settings').length, 1);
   assert(byClass('xra-title').some(e => e.textContent === 'No editor'));
   assert(!elements.find(e => e.id === 'xra-reply-panel').removed);

@@ -7,3 +7,6 @@
 *.crx
 extension/backups/
 extension/TODO.md
+docs/article-assets/
+docs/x-reply-assistant-longform.md
+tests/blue-v-reply-preview.html

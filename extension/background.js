@@ -1,3 +1,4 @@
+import { readOwnPageStats } from "./page-stats.js";
 import { readFollowStatuses } from "./follow-reader.js";
 
 const threadContextCache = new Map();
@@ -5,6 +6,11 @@ const threadContextCache = new Map();
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "open-options") {
     chrome.runtime.openOptionsPage();
+    return;
+  }
+
+  if (message.type === "open-followback-manager") {
+    chrome.tabs.create({ url: chrome.runtime.getURL("options.html#followback") });
     return;
   }
 
@@ -49,7 +55,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === "collect-x-daily-stats") {
-    collectXDailyStats().then(
+    collectXDailyStats(message.mode).then(
       (stats) => sendResponse({ ok: true, stats }),
       (error) => sendResponse({ ok: false, error: error.message })
     );
@@ -541,7 +547,10 @@ async function fetchXPost(auth, postId) {
   return { ...body.data, author: author ? `@${author}` : "" };
 }
 
-async function collectXDailyStats() {
+async function collectXDailyStats(requestedMode) {
+  const { replyContextMode } = await chrome.storage.local.get("replyContextMode");
+  const mode = ["page", "api"].includes(requestedMode) ? requestedMode : replyContextMode;
+  if (mode !== "api") return collectPageDailyStats();
   const auth = await getValidXAuth();
   if (!auth.userId) throw new Error("X 账号缺少用户 ID，请重新连接账号。");
   const now = new Date();
@@ -557,6 +566,7 @@ async function collectXDailyStats() {
   }
 
   const stats = {
+    source: "api",
     userId: auth.userId,
     periodStart,
     collectedAt: Date.now(),
@@ -1172,4 +1182,44 @@ function chatCompletionsUrl(apiUrl) {
   return trimmed.endsWith("/chat/completions")
     ? trimmed
     : `${trimmed}/chat/completions`;
+}
+
+async function collectPageDailyStats() {
+  const tabs = await chrome.tabs.query({ url: ["https://x.com/*", "https://twitter.com/*"] });
+  if (!tabs.length) throw new Error("未找到 X 标签页，请在当前浏览器打开并登录 x.com。");
+  const results = await Promise.allSettled(tabs.map(async tab => {
+    const frames = await chrome.scripting.executeScript({ target: { tabId: tab.id }, func: readOwnPageStats });
+    return { ok: true, snapshot: frames[0]?.result };
+  }));
+  const snapshots = results.filter(r => r.status === "fulfilled" && r.value?.ok).map(r => r.value.snapshot);
+  if (!snapshots.length) {
+    const reasons = [...new Set(results.filter(r => r.status === "rejected").map(r => r.reason?.message || "页面读取失败"))];
+    throw new Error(reasons.join("；") || "页面尚未加载，请打开自己的主页或回复页。");
+  }
+  const usernames = new Set(snapshots.map(s => s.username));
+  if (usernames.size !== 1) throw new Error("检测到多个登录账号，请只保留需要统计的账号页面。");
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8);
+  if (now < start) start.setDate(start.getDate() - 1);
+  const periodStart = start.toISOString();
+  const username = snapshots[0].username;
+  const stored = await chrome.storage.local.get(["xPagePosts", "xPageFollowerBaseline"]);
+  const previous = stored.xPagePosts;
+  const posts = new Map(previous?.username === username && previous?.periodStart === periodStart ? previous.posts.map(p => [p.id, p]) : []);
+  for (const snapshot of snapshots) for (const post of snapshot.posts) {
+    const date = Date.parse(post.createdAt);
+    if (date >= start.getTime() && date <= now.getTime()) posts.set(post.id, post);
+  }
+  const rows = [...posts.values()];
+  const measurable = rows.filter(p => !p.reply && p.impressions !== null);
+  const follower = snapshots.find(s => s.followers !== null);
+  let baseline = stored.xPageFollowerBaseline;
+  const same = baseline?.username === username && baseline?.periodStart === periodStart;
+  const followerChange = follower && same ? follower.followers - baseline.count : null;
+  if (follower && !same) baseline = { username, periodStart, count: follower.followers, at: Date.now() };
+  const stats = { source: "page", username, periodStart, collectedAt: Date.now(), posts: rows.length ? rows.filter(p => !p.reply).length : null, replies: rows.length ? rows.filter(p => p.reply).length : null, impressions: measurable.length ? measurable.reduce((n,p) => n+p.impressions,0) : null, impressionCoverage: measurable.length, scannedPosts: rows.filter(p => !p.reply).length, complete: false, followerChange, followerBaselineAt: follower ? baseline.at : null, errors: ["页面模式：仅统计已加载并采集的记录，数据可能不完整；曝光为这些帖子的累计浏览量。", ...(follower?.followerApproximate ? ["粉丝数为页面缩写估算值。"] : [])] };
+  const updates = { xDailySummary: stats, xPagePosts: { username, periodStart, posts: rows } };
+  if (follower) updates.xPageFollowerBaseline = baseline;
+  await chrome.storage.local.set(updates);
+  return stats;
 }

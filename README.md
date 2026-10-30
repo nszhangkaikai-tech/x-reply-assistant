@@ -4,8 +4,6 @@ Chrome extension that reads the X posts visible in the current tab, applies a lo
 
 - [Product website](https://nszhangkaikai-tech.github.io/x-reply-assistant/)
 - [Download the latest release](https://github.com/nszhangkaikai-tech/x-reply-assistant/releases/latest)
-- Author X: [@kaye77880](https://x.com/kaye77880)
-- Telegram: [X Reply交流群](https://t.me/+VcnKeuCNrmNiMDY1)
 
 ## 1. Load the extension
 
@@ -49,3 +47,12 @@ Generic praise, fake personal stories, and marketing jargon.
 - The persona Markdown, API URL, API Key, and model name are stored in Chrome extension local storage. Never install an extension you do not trust alongside it.
 - Page mode sends relevant loaded page content and your persona to the configured model provider. API mode additionally sends retrieved parent-post context. Neither mode guarantees a complete conversation.
 - X frequently changes its DOM. If the extension stops finding posts or the reply editor, update the selectors in `extension/content.js`.
+
+## X 数据读取模式
+
+在后台“语言与风格”选择 X 数据读取模式并保存，此设置同时控制回复上下文与今日 X 数据。
+
+- 页面模式（默认）：无需 X API。打开自己的主页或回复页，加载所需帖子，再回后台手动采集。只统计已读取的记录，不保证完整；没有读到的值显示暂无。回复上下文读取详情页已加载的上文。
+- API 模式：配置并连接 X 授权后采集；失败保留上次数据，可点击切换页面模式。
+- 粉丝变化从当前统计周期（本地时间 08:00 起）首次采集建立基准，页面与 API 基准独立。页面缩写数字为估算。曝光为已采帖子累计浏览量，并非当日新增曝光。
+- 两种模式生成回复均仍需 AI 模型服务；扩展不自动发布。

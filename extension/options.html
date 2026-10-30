@@ -15,6 +15,7 @@
           <button class="nav-item active" type="button" data-page="home">首页</button>
           <button class="nav-item" type="button" data-page="interactions">互动管理</button>
           <button class="nav-item" type="button" data-page="relationship">互动复盘</button>
+          <button class="nav-item" type="button" data-page="followback">回关管理</button>
           <button class="nav-item" type="button" data-page="profile">回复人设</button>
           <button class="nav-item" type="button" data-page="style">语言与风格</button>
           <button class="nav-item" type="button" data-page="api">模型与 API</button>
@@ -43,11 +44,11 @@
               <div class="home-metrics four">
                 <article><p>发帖</p><strong id="home-x-posts">—</strong><span>条</span></article>
                 <article><p>回复</p><strong id="home-x-replies">—</strong><span>条</span></article>
-                <article><p>涨粉</p><strong id="home-x-followers">—</strong><span>净变化</span></article>
-                <article><p>曝光</p><strong id="home-x-impressions">—</strong><span>次</span></article>
+                <article><p>粉丝变化</p><strong id="home-x-followers">—</strong><span>净变化</span></article>
+                <article><p>已采帖子累计曝光</p><strong id="home-x-impressions">—</strong><span>次</span></article>
               </div>
-              <p id="home-x-progress" class="home-card-status"></p>
-              <p id="home-x-status" class="home-card-status" role="status">连接 X 账号后可手动采集。</p>
+              <label for="home-x-mode">X 数据读取模式（同时用于回复上下文）</label><select id="home-x-mode" disabled><option value="page">页面模式 · 不使用 X API</option><option value="api">API 模式 · 使用 X API 额度</option></select><p id="home-x-progress" class="home-card-status"></p>
+              <button id="home-x-switch-page" class="secondary hidden" type="button">切换页面模式</button><p id="home-x-status" class="home-card-status" role="status">连接 X 账号后可手动采集。</p>
             </section>
 
             <section class="home-dashboard-card" aria-label="今日互动">
@@ -146,6 +147,48 @@
           </section>
         </section>
 
+        <section class="settings-page" data-page="followback">
+          <header class="page-header interaction-header">
+            <div><p class="crumb">X REPLY　/　回关管理</p><h1>哪些关注，还没有回关？</h1><p>读取你自己的 Following 页面已加载内容，快速筛选未回关账号。</p></div>
+            <div class="interaction-update"><div><button id="followback-open-x" class="primary" type="button">打开 Following 页面</button></div><p id="followback-updated-at" class="stats-date">尚未扫描</p></div>
+          </header>
+          <div class="interaction-scope"><strong>统计范围</strong><span>不调用 X API，不逐个访问账号；只复用 X 页面滚动时已经返回的关注关系。未滚动加载到的历史账号会显示为“待复查”。</span></div>
+          <section class="panel relationship-panel">
+            <div class="followback-account-row">
+              <label class="relationship-select"><span>当前账号</span><select id="followback-account"><option value="">尚未扫描</option></select></label>
+              <p id="followback-scan-note" class="stats-date">先打开自己的 Following 页面并向下滚动。</p>
+            </div>
+            <div class="stats-grid relationship-stats followback-stats">
+              <article><p>历史记录</p><strong id="followback-total">0</strong><span>人</span></article>
+              <article class="needs-attention"><p>未回关</p><strong id="followback-non">0</strong><span>人</span></article>
+              <article><p>新增回关</p><strong id="followback-returned">0</strong><span>人</span></article>
+              <article><p>待复查</p><strong id="followback-pending">0</strong><span>人</span></article>
+            </div>
+            <div class="relationship-controls" aria-label="回关账号筛选">
+              <label class="relationship-search"><span class="sr-only">搜索账号</span><input id="followback-search" type="search" placeholder="搜索用户名或 @ID"></label>
+              <label class="relationship-select"><span>排序</span><select id="followback-sort"><option value="checked">最近检查</option><option value="first">最早发现</option><option value="handle">账号名称</option></select></label>
+              <label class="relationship-select"><span>每页</span><select id="followback-page-size"><option value="10">10 个</option><option value="20" selected>20 个</option><option value="50">50 个</option><option value="100">100 个</option></select></label>
+            </div>
+            <div class="interaction-toolbar relationship-toolbar">
+              <div class="interaction-tabs" role="tablist" aria-label="回关状态筛选">
+                <button class="active" type="button" data-followback-filter="non">未回关</button>
+                <button type="button" data-followback-filter="returned">新增回关</button>
+                <button type="button" data-followback-filter="pending">待复查</button>
+                <button type="button" data-followback-filter="all">全部记录</button>
+              </div>
+              <p id="followback-result-count" class="stats-date">筛选后 0 / 共 0 个账号</p>
+            </div>
+            <div id="followback-list" class="relationship-list"></div>
+            <div id="followback-empty" class="interaction-empty">还没有符合条件的回关记录。</div>
+            <div class="relationship-pagination" aria-label="回关账号翻页">
+              <button id="followback-prev" class="secondary" type="button">上一页</button>
+              <span id="followback-page-info">第 1 / 1 页</span>
+              <button id="followback-next" class="secondary" type="button">下一页</button>
+            </div>
+            <p class="hint relationship-rule">“新增回关”表示这个账号曾被记录为未回关，之后重新检查时已经回关。插件只做标记，不会自动关注或取消关注。</p>
+          </section>
+        </section>
+
         <section class="settings-page" data-page="profile">
           <header class="page-header"><div><p class="crumb">回复设置　/　回复人设</p><h1>让每条回复都像你自己写的。</h1><p>定义身份、观点、口吻和不能碰的表达。</p></div></header>
           <section class="panel">
@@ -166,10 +209,10 @@
               <div><label for="generation-mode">推理档位</label><select id="generation-mode"><option value="fast">快速模式</option><option value="balanced">平衡模式</option><option value="deep">深度模式</option></select></div>
             </div>
             <p class="hint">快速模式适合日常回复，不展示模型思考过程。</p>
-            <label for="reply-context-mode">回复上下文模式</label>
+            <label for="reply-context-mode">X 数据读取模式</label>
             <select id="reply-context-mode" disabled>
-              <option value="page">页面模式（默认，不需要 X API）</option>
-              <option value="api">API 增强模式（需手动配置 X 授权）</option>
+              <option value="page">页面模式（默认，上下文与统计均不使用 X API）</option>
+              <option value="api">API 模式（上下文与统计使用 X 授权）</option>
             </select>
             <p class="hint" id="reply-context-hint">页面模式使用当前帖及帖子详情页中已加载的上文；不会调用 X API 查找父帖。两种模式都需要配置 AI 模型服务，生成后由你确认发布。</p>
             <button id="configure-context-api" class="secondary hidden" type="button">前往手动配置 X 授权</button>
@@ -274,6 +317,7 @@
         </section>
       </main>
     </div>
+    <script src="followback-core.js"></script>
     <script src="options.js"></script>
   </body>
 </html>

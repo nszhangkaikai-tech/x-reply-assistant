@@ -15,7 +15,7 @@ function backgroundContext() {
       tabs: { onRemoved: { addListener() {} } }
     }
   });
-  vm.runInContext(source('background.js').replace(/^import .*;\n/, ''), context);
+  vm.runInContext(source('background.js').replace(/^import .*;\n/gm, ''), context);
   return context;
 }
 
@@ -40,7 +40,7 @@ function optimizationContext(fetch) {
       storage: { local: { get: async () => settings } }
     }
   });
-  vm.runInContext(source('background.js').replace(/^import .*;\n/, ''), context);
+  vm.runInContext(source('background.js').replace(/^import .*;\n/gm, ''), context);
   return context;
 }
 
